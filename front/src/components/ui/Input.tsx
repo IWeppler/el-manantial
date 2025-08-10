@@ -1,7 +1,6 @@
-// app/components/CustomInput.tsx (con clsx)
 "use client";
 import { useField } from "formik";
-import clsx from "clsx"; // 1. Importar clsx
+import clsx from "clsx";
 
 interface CustomInputProps {
   label: string;
@@ -27,10 +26,10 @@ export const CustomInput = ({ label, ...props }: CustomInputProps) => {
           {...props}
           // 2. Usar clsx para construir las clases
           className={clsx(
-            "block w-full px-2 py-3 rounded-md border bg-white sm:text-sm", // Clases que siempre se aplican
+            "block w-full px-2 py-3 rounded-md border bg-white sm:text-sm",
             {
-              "border-red-700": meta.touched && meta.error, // Se aplica si la condición es verdadera
-              "border-gray-300": !(meta.touched && meta.error), // Se aplica si la condición es falsa
+              "border-red-700": meta.touched && meta.error,
+              "border-gray-300": !(meta.touched && meta.error),
             }
           )}
         />

@@ -14,8 +14,9 @@ import {
   deliveryTimeOptions,
   paymentMethodOptions,
 } from "../lib/data-form";
+import Link from "next/link";
 
-// Define la estructura de los valores del formulario para un tipado fuerte
+// Estructura de los valores
 interface FormValues {
   name: string;
   phone: string;
@@ -65,107 +66,121 @@ const FormContent = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
       (p) => p.value === values.product
     );
     const productPrice = selectedProduct?.price || 0;
-    setTotalPrice(productPrice); // Solo se calcula el precio del producto
+    setTotalPrice(productPrice);
   }, [values.product]);
 
   return (
-    <Form className="space-y-6">
+    <>
       {!isLoggedIn && (
-        <>
-          <CustomInput
-            label="Nombre Completo"
-            name="name"
+        <p className="text-center text-neutral-800 mb-6">
+          ¿Ya tenés cuenta?{" "}
+          <Link
+            href="/login"
+            className="font-medium text-primary hover:underline"
+          >
+            Iniciá sesión
+          </Link>
+        </p>
+      )}
+
+      <Form className="space-y-6">
+        {!isLoggedIn && (
+          <>
+            <CustomInput
+              label="Nombre Completo"
+              name="name"
+              type="text"
+              placeholder="Juan Pérez"
+            />
+            <CustomInput
+              label="Número de WhatsApp"
+              name="phone"
+              type="tel"
+              placeholder="3491..."
+            />
+          </>
+        )}
+
+        <Select label="1. ¿Qué cantidad querés?" name="product">
+          <option value="">Selecciona una opción...</option>
+          {productOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </Select>
+
+        <Select label="2. ¿Retirás o te lo enviamos?" name="deliveryType">
+          <option value="">Selecciona una opción...</option>
+          {deliveryTypeOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </Select>
+
+        {values.deliveryType === "delivery" && (
+          <Field
+            as={CustomInput}
+            label="Dirección de Envío"
+            name="address"
             type="text"
-            placeholder="Juan Pérez"
+            placeholder="Av. Siempre Viva 123"
           />
-          <CustomInput
-            label="Número de WhatsApp"
-            name="phone"
-            type="tel"
-            placeholder="3491..."
-          />
-        </>
-      )}
+        )}
 
-      <Select label="1. ¿Qué cantidad querés?" name="product">
-        <option value="">Selecciona una opción...</option>
-        {productOptions.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </Select>
-
-      <Select label="2. ¿Retirás o te lo enviamos?" name="deliveryType">
-        <option value="">Selecciona una opción...</option>
-        {deliveryTypeOptions.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </Select>
-
-      {values.deliveryType === "delivery" && (
-        <Field
-          as={CustomInput}
-          label="Dirección de Envío"
-          name="address"
-          type="text"
-          placeholder="Av. Siempre Viva 123"
-        />
-      )}
-
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <Select label="3. ¿Qué día?" name="deliveryDay">
-          <option value="">Selecciona un día...</option>
-          {deliveryDayOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </Select>
-        <Select label="4. ¿A qué hora?" name="deliveryTime">
-          <option value="">Selecciona una hora...</option>
-          {deliveryTimeOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </Select>
-      </div>
-
-      <Select label="5. Método de Pago" name="paymentMethod">
-        <option value="">Selecciona una opción...</option>
-        {paymentMethodOptions.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </Select>
-
-      <div className="mt-6 pt-6 border-t border-gray-200">
-        <div className="flex justify-between text-lg font-bold text-gray-900">
-          <span>Total a pagar:</span>
-          <span>
-            {totalPrice.toLocaleString("es-AR", {
-              style: "currency",
-              currency: "ARS",
-              minimumFractionDigits: 0,
-            })}
-          </span>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <Select label="3. ¿Qué día?" name="deliveryDay">
+            <option value="">Selecciona un día...</option>
+            {deliveryDayOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+          <Select label="4. ¿A qué hora?" name="deliveryTime">
+            <option value="">Selecciona una hora...</option>
+            {deliveryTimeOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
         </div>
-      </div>
 
-      <div>
-        <button
-          type="submit"
-          disabled={!dirty || !isValid}
-          className="mt-4 w-full cursor-pointer rounded-md border border-transparent bg-primary px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-neutral-950 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
-          Hacer mi pedido
-        </button>
-      </div>
-    </Form>
+        <Select label="5. Método de Pago" name="paymentMethod">
+          <option value="">Selecciona una opción...</option>
+          {paymentMethodOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </Select>
+
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="flex justify-between text-lg font-bold text-gray-900">
+            <span>Total a pagar:</span>
+            <span>
+              {totalPrice.toLocaleString("es-AR", {
+                style: "currency",
+                currency: "ARS",
+                minimumFractionDigits: 0,
+              })}
+            </span>
+          </div>
+        </div>
+
+        <div>
+          <button
+            type="submit"
+            disabled={!dirty || !isValid}
+            className="mt-4 w-full cursor-pointer rounded-md border border-transparent bg-primary px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-neutral-950 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            Hacer mi pedido
+          </button>
+        </div>
+      </Form>
+    </>
   );
 };
 
@@ -181,9 +196,16 @@ const OrderForm = ({ isLoggedIn, userName }: OrderFormProps) => {
   const [successfulOrderData, setSuccessfulOrderData] = useState<{
     paymentMethod?: string;
     totalPrice?: number;
+    guestName?: string;
+    guestPhone?: string;
   } | null>(null);
 
-  const openModalWithData = (data: { paymentMethod?: string; totalPrice?: number }) => {
+  const openModalWithData = (data: {
+    paymentMethod?: string;
+    totalPrice?: number;
+    guestName?: string;
+    guestPhone?: string;
+  }) => {
     setSuccessfulOrderData(data);
     setIsModalOpen(true);
   };
@@ -217,8 +239,8 @@ const OrderForm = ({ isLoggedIn, userName }: OrderFormProps) => {
           </div>
         ) : (
           <div className="mb-8">
-            <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-              Pedí tus huevos frescos
+            <h2 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
+              Pedí tus huevos de campo
             </h2>
             <p className="mt-2 text-lg text-gray-600">
               Completá el formulario y nos pondremos en contacto.
@@ -230,13 +252,17 @@ const OrderForm = ({ isLoggedIn, userName }: OrderFormProps) => {
           initialValues={initialValues}
           validationSchema={isLoggedIn ? userSchema : guestSchema}
           onSubmit={(values, { setSubmitting, resetForm }) => {
-            const selectedProduct = productOptions.find(p => p.value === values.product);
+            const selectedProduct = productOptions.find(
+              (p) => p.value === values.product
+            );
             const finalPrice = selectedProduct?.price || 0;
 
             setTimeout(() => {
               openModalWithData({ 
                 paymentMethod: values.paymentMethod,
-                totalPrice: finalPrice 
+                totalPrice: finalPrice,
+                guestName: values.name,
+                guestPhone: values.phone,
               });
               setSubmitting(false);
               resetForm();
@@ -253,10 +279,12 @@ const OrderForm = ({ isLoggedIn, userName }: OrderFormProps) => {
         onClose={closeModal}
         paymentMethod={successfulOrderData?.paymentMethod}
         totalPrice={successfulOrderData?.totalPrice}
+        guestName={successfulOrderData?.guestName}
+        guestPhone={successfulOrderData?.guestPhone}
+        isGuestOrder={!isLoggedIn}
       />
     </>
   );
 };
 
 export default OrderForm;
-

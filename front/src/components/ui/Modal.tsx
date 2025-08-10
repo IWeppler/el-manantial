@@ -1,4 +1,3 @@
-// app/components/SuccessModal.tsx
 "use client";
 import {
   Dialog,
@@ -9,12 +8,16 @@ import {
 } from "@headlessui/react";
 import { Fragment } from "react";
 import { CheckCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation";
 
 interface SuccessModalProps {
   isOpen: boolean;
   onClose: () => void;
   paymentMethod?: string;
-  totalPrice?: number; // Nueva prop
+  totalPrice?: number;
+  guestName?: string;
+  guestPhone?: string;
+  isGuestOrder: boolean;
 }
 
 export default function SuccessModal({
@@ -22,10 +25,28 @@ export default function SuccessModal({
   onClose,
   paymentMethod,
   totalPrice,
+  isGuestOrder,
+  guestName,
+  guestPhone,
 }: SuccessModalProps) {
+  const router = useRouter();
+
   const CBU = process.env.NEXT_PUBLIC_MP_CBU;
   const ALIAS = process.env.NEXT_PUBLIC_MP_ALIAS;
   const TELEFONO = process.env.NEXT_PUBLIC_CONTACT_PHONE;
+
+  const handleCreateAccountClick = () => {
+    // Guardamos los datos del invitado en el sessionStorage
+    sessionStorage.setItem(
+      "guestDataForRegistration",
+      JSON.stringify({
+        name: guestName,
+        phone: guestPhone,
+      })
+    );
+    // Redirigimos a la página de registro
+    router.push("/register");
+  };
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -109,10 +130,26 @@ export default function SuccessModal({
                           <strong>Alias:</strong> {ALIAS}
                         </p>
                       </div>
-                      <p className="mt-3 text-xs text-gray-500">
-                        Por favor, envianos el comprobante por WhatsApp al
+                      <p className="mt-3 text-xs text-gray-700">
+                        Por favor, envianos el comprobante por WhatsApp al{" "}
                         {TELEFONO} una vez realizado el pago.
                       </p>
+                    </div>
+                  )}
+
+                  {/* 2. Bloque condicional para la invitación al registro */}
+                  {isGuestOrder && (
+                    <div className="mt-6 w-full text-center p-4 bg-accent/10 rounded-lg border border-accent">
+                      <p className="font-semibold text-primary">
+                        Hace tu próxima compra más rápida
+                      </p>
+                      <button
+                        type="button"
+                        className="mt-3 inline-flex justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-foreground cursor-pointer"
+                        onClick={handleCreateAccountClick}
+                      >
+                        Crear mi cuenta
+                      </button>
                     </div>
                   )}
 

@@ -1,8 +1,6 @@
-// app/page.tsx
 import OrderForm from "../components/OrderForm";
 import Image from "next/image";
 
-// Mock de la sesión (sin cambios)
 const getMockSession = async () => {
   const isLoggedIn = false;
   if (!isLoggedIn) return null;
@@ -13,10 +11,8 @@ export default async function HomePage() {
   const session = await getMockSession();
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-white">
       {/* Columna 1: Formulario con scroll y logo */}
-      {/* 1. EL CAMBIO CLAVE: Quitamos 'items-center' de esta línea. */}
-      {/* El contenido ahora se alineará arriba por defecto y el padding (p-8) le dará el espacio necesario. */}
       <div className="w-full md:w-[60%] h-screen md:overflow-y-auto flex justify-center py-8 md:p-12 scrollbar-hide">
         <div className="relative w-full max-w-md">
           <div className="flex justify-center mb-4">
@@ -25,7 +21,7 @@ export default async function HomePage() {
               alt="Logo del emprendimiento"
               height={80}
               width={80}
-              className="rounded-full object-cover shadow-md"
+              className="rounded-full object-cover"
             />
           </div>
 
