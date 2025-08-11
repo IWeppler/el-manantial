@@ -1,18 +1,18 @@
-// app/components/LoginForm.tsx
 "use client";
 
+import { signIn } from "next-auth/react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import Link from "next/link";
 import { CustomInput } from "./ui/Input";
+import { useRouter } from "next/navigation";
 
 const LoginSchema = Yup.object({
   phone: Yup.string()
     .matches(/^[0-9]+$/, "Solo se admiten números")
     .min(10, "El teléfono debe tener al menos 10 dígitos")
     .required("El número de teléfono es obligatorio"),
-  password: Yup.string()
-    .required("La contraseña es obligatoria"),
+  password: Yup.string().required("La contraseña es obligatoria"),
 });
 
 // Interfaz para los valores del formulario
@@ -22,6 +22,7 @@ interface LoginValues {
 }
 
 const LoginForm = () => {
+  const router = useRouter();
   const initialValues: LoginValues = {
     phone: "",
     password: "",
@@ -48,12 +49,23 @@ const LoginForm = () => {
       <Formik
         initialValues={initialValues}
         validationSchema={LoginSchema}
-        onSubmit={(values, { setSubmitting }) => {
-          setTimeout(() => {
-            // Aquí iría la lógica para autenticar al usuario
-            alert(JSON.stringify(values, null, 2));
-            setSubmitting(false);
-          }, 500);
+        onSubmit={async (values, { setSubmitting }) => {
+          // 2. Llama a la función signIn
+          const result = await signIn("credentials", {
+            redirect: false, // No redirigir automáticamente
+            phone: values.phone,
+            password: values.password,
+          });
+
+          if (result?.error) {
+            // Aquí puedes manejar el error, por ejemplo, mostrar un mensaje
+            console.error("Error de inicio de sesión:", result.error);
+            alert("Credenciales incorrectas. Inténtalo de nuevo.");
+          } else {
+            // Si el login es exitoso, redirige a la página principal
+            router.push("/");
+          }
+          setSubmitting(false);
         }}
       >
         {({ isValid, dirty, isSubmitting }) => (

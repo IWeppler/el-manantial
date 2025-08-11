@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import { CustomInput } from "./ui/Input";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { CustomInput } from "./ui/Input";
 
 interface RegisterFormValues {
   name: string;
@@ -36,13 +38,15 @@ const GuestConversionSchema = Yup.object({
 });
 
 export const RegisterForm = () => {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
   const [initialValues, setInitialValues] = useState<RegisterFormValues>({
     name: "",
     phone: "",
     address: "",
     password: "",
   });
-
+  
   const [isGuestConversion, setIsGuestConversion] = useState(false);
 
   useEffect(() => {
@@ -75,66 +79,74 @@ export const RegisterForm = () => {
       <Formik
         initialValues={initialValues}
         enableReinitialize
-        validationSchema={
-          isGuestConversion ? GuestConversionSchema : RegisterSchema
-        }
-        onSubmit={(values, { setSubmitting }) => {
-          setTimeout(() => {
-            alert(JSON.stringify(values, null, 2));
+        validationSchema={isGuestConversion ? GuestConversionSchema : RegisterSchema}
+        onSubmit={async (values, { setSubmitting }) => {
+          setError(null);
+          try {
+            // 1. Enviamos los datos a nuestra API de registro
+            const response = await fetch("/api/register", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(values),
+            });
+
+            if (!response.ok) {
+              // Si la API devuelve un error (ej: teléfono ya existe)
+              const errorData = await response.text();
+              throw new Error(errorData || "Ocurrió un error al registrar.");
+            }
+
+            // 2. Si el registro es exitoso, iniciamos sesión automáticamente
+            const signInResponse = await signIn("credentials", {
+              phone: values.phone,
+              password: values.password,
+              redirect: false, // No redirigimos automáticamente
+            });
+
+            if (signInResponse?.error) {
+              // Si el inicio de sesión automático falla
+              throw new Error("Error al iniciar sesión después del registro.");
+            }
+
+            // 3. Si todo sale bien, redirigimos al usuario
+            router.push("/");
+            router.refresh(); // Refrescamos para asegurar que la sesión se actualice
+
+          } catch (err: any) {
+            setError(err.message);
+          } finally {
             setSubmitting(false);
-          }, 500);
+          }
         }}
       >
         {({ isValid, dirty, isSubmitting }) => (
           <Form className="mt-8 space-y-6">
             {isGuestConversion ? (
               <div className="space-y-2 rounded-md bg-slate-50 p-4 border border-slate-200">
-                <p className="text-sm text-gray-600">
-                  <span className="font-semibold">Nombre:</span>{" "}
-                  {initialValues.name}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <span className="font-semibold">Teléfono:</span>{" "}
-                  {initialValues.phone}
-                </p>
+                <p className="text-sm text-gray-600"><span className="font-semibold">Nombre:</span> {initialValues.name}</p>
+                <p className="text-sm text-gray-600"><span className="font-semibold">Teléfono:</span> {initialValues.phone}</p>
               </div>
             ) : (
               <>
-                <CustomInput
-                  label="Nombre Completo"
-                  name="name"
-                  type="text"
-                  placeholder="Tu nombre y apellido"
-                />
-                <CustomInput
-                  label="Número de WhatsApp"
-                  name="phone"
-                  type="tel"
-                  placeholder="Ej: 3491..."
-                />
+                <CustomInput label="Nombre Completo" name="name" type="text" placeholder="Tu nombre y apellido" />
+                <CustomInput label="Número de WhatsApp" name="phone" type="tel" placeholder="Ej: 1122334455" />
               </>
             )}
-
-            {/* La dirección y la contraseña siempre se piden */}
-            <CustomInput
-              label="Dirección de Envío"
-              name="address"
-              type="text"
-              placeholder="Calle Falsa 123, Tostado"
-            />
-            <CustomInput
-              label="Creá una Contraseña"
-              name="password"
-              type="password"
-              placeholder="Mínimo 5 caracteres"
-            />
+            
+            <CustomInput label="Dirección de Envío" name="address" type="text" placeholder="Calle Falsa 123, Tostado" />
+            <CustomInput label="Creá una Contraseña" name="password" type="password" placeholder="Mínimo 6 caracteres" />
+            
+            {/* Mostramos el mensaje de error si existe */}
+            {error && (
+              <p className="text-sm text-red-600 text-center">{error}</p>
+            )}
 
             <button
               type="submit"
               disabled={!dirty || !isValid || isSubmitting}
               className="w-full cursor-pointer rounded-md border border-transparent bg-primary px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-neutral-950 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {isGuestConversion ? "Finalizar registro" : "Crear cuenta"}
+              {isSubmitting ? "Registrando..." : (isGuestConversion ? "Finalizar registro" : "Crear cuenta")}
             </button>
           </Form>
         )}
