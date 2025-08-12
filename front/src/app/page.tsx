@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import OrderForm from "../components/OrderForm";
 import Image from "next/image";
 import { LogoutButton } from "../components/ui/Buttons";
+import Link from "next/link";
 
 export default async function HomePage() {
   const session = await getServerSession();
@@ -26,6 +27,16 @@ export default async function HomePage() {
             isLoggedIn={!!session}
             userName={session?.user?.name ?? "Cliente"}
           />
+          <p className="text-neutral-500 text-sm font-medium text-center mt-4">
+            Desarrollado por{" "}
+            <Link
+              href="https://ignacioweppler.vercel.app/"
+              target="_blank"
+              className="text-green-500"
+            >
+              Ignacio Weppler
+            </Link>
+          </p>
         </div>
       </div>
 

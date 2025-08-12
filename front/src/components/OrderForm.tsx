@@ -72,7 +72,7 @@ const FormContent = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
   return (
     <>
       {!isLoggedIn && (
-        <p className="text-center text-neutral-800 mb-6">
+        <p className="text-center text-neutral-800 mb-4">
           ¿Ya tenés cuenta?{" "}
           <Link
             href="/login"
@@ -239,7 +239,7 @@ const OrderForm = ({ isLoggedIn, userName }: OrderFormProps) => {
             </p>
           </div>
         ) : (
-          <div className="mb-8">
+          <div className="mb-2">
             <h2 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
               Pedí tus huevos de campo
             </h2>
