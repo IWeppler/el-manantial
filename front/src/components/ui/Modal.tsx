@@ -30,6 +30,7 @@ export default function SuccessModal({
   guestPhone,
 }: SuccessModalProps) {
   const router = useRouter();
+  const priceInPesos = totalPrice ? totalPrice / 100 : 0;
 
   const CBU = process.env.NEXT_PUBLIC_MP_CBU;
   const ALIAS = process.env.NEXT_PUBLIC_MP_ALIAS;
@@ -44,7 +45,6 @@ export default function SuccessModal({
         phone: guestPhone,
       })
     );
-    // Redirigimos a la página de registro
     router.push("/register");
   };
 
@@ -107,7 +107,8 @@ export default function SuccessModal({
                         Monto total a pagar:
                       </p>
                       <p className="text-3xl font-bold text-gray-900">
-                        {totalPrice.toLocaleString("es-AR", {
+                        {/* 2. Usamos la nueva variable para formatear */}
+                        {priceInPesos.toLocaleString("es-AR", {
                           style: "currency",
                           currency: "ARS",
                           minimumFractionDigits: 0,

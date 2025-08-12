@@ -9,7 +9,7 @@ export default async function HomePage() {
   return (
     <main className="min-h-screen">
       {/* Columna 1: Formulario con scroll y logo */}
-      <div className="w-full md:w-[60%] h-screen md:overflow-y-auto flex justify-center py-8 md:p-12 scrollbar-hide">
+      <div className="w-full md:w-[60%] h-screen md:overflow-y-auto flex justify-center py-8 md:p-12 scrollbar-hide px-2 bg-[#f5f5f5] md:bg-white">
         <div className="relative w-full max-w-md">
           {session && <LogoutButton />}
           <div className="flex justify-center mb-4">

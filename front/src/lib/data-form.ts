@@ -27,6 +27,7 @@ export const productOptions = [
 export const deliveryTypeOptions = [
   { value: "pickup", label: "Retiro en el local" },
   { value: "delivery", label: "Envío a domicilio" },
+  
 ];
 
 export const deliveryDayOptions = [
@@ -35,9 +36,9 @@ export const deliveryDayOptions = [
 ];
 
 export const deliveryTimeOptions = [
-  { value: "13:00", label: "13:00 hs" },
-  { value: "20:00", label: "20:00 hs" },
-];
+  { value: "T13_00", label: "13:00 hs" },
+  { value: "T20_00", label: "20:00 hs" },
+]
 
 export const paymentMethodOptions = [
   { value: "efectivo", label: "Efectivo" },

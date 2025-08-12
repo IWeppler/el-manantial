@@ -26,17 +26,52 @@ model User {
   orders         Order[]
 }
 
-model Order {
-  id                String    @id @default(cuid())
-  product           String
-  deliveryType      String
-  deliveryDay       String
-  deliveryTime      String
-  paymentMethod     String
-  status            String    @default("pending")
-  orderDate         DateTime  @default(now())
-  isSubscriptionOrder Boolean   @default(false)
+model Product {
+  id    String  @id @default(cuid())
+  name  String  
+  value String  @unique 
+  price Int     
+  
+  orders Order[]
+}
 
-  user              User      @relation(fields: [userId], references: [id])
-  userId            String
+
+enum DeliveryType {
+  RETIRO_EN_LOCAL
+  ENVIO_A_DOMICILIO
+}
+
+enum PaymentMethod {
+  EFECTIVO
+  TRANSFERENCIA
+}
+
+enum OrderStatus {
+  PENDIENTE
+  CONFIRMADO
+  ENTREGADO
+  CANCELADO
+}
+
+enum DeliveryTime {
+  T13_00
+  T20_00
+}
+
+model Order {
+  id                  String    @id @default(cuid())
+  productId           String
+  product             Product   @relation(fields: [productId], references: [id])
+  totalPrice          Int       
+  guestName           String?
+  guestPhone          String?
+  user                User?     @relation(fields: [userId], references: [id])
+  userId              String?
+  deliveryType        DeliveryType
+  deliveryDay         String
+  deliveryTime        DeliveryTime
+  paymentMethod       PaymentMethod
+  status              OrderStatus @default(PENDIENTE)
+  orderDate           DateTime  @default(now())
+  isSubscriptionOrder Boolean   @default(false)
 }

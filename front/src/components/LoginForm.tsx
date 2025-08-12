@@ -29,7 +29,7 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-md ">
       <div>
         <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900">
           Iniciá sesión en tu cuenta

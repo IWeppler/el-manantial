@@ -146,7 +146,7 @@ export const RegisterForm = () => {
                   label="Número de WhatsApp"
                   name="phone"
                   type="tel"
-                  placeholder="Ej: 1122334455"
+                  placeholder="03491 547021"
                 />
               </>
             )}
@@ -161,7 +161,7 @@ export const RegisterForm = () => {
               label="Creá una Contraseña"
               name="password"
               type="password"
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 5 caracteres"
             />
 
             {/* Mostramos el mensaje de error si existe */}

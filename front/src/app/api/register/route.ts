@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { db } from "../../../lib/db";
 import { Role } from "@prisma/client";
+import { normalizePhoneNumber } from "@/lib/utils";
 
 export async function POST(request: Request) {
   try {
@@ -15,35 +16,32 @@ export async function POST(request: Request) {
     }
 
     // 3. Verificamos si ya existe un usuario con ese número de teléfono
+    const normalizedPhone = normalizePhoneNumber(phone);
+
     const existingUser = await db.user.findUnique({
-      where: { phone: phone },
+      where: { phone: normalizedPhone },
     });
 
     if (existingUser) {
-      return new NextResponse("El número de teléfono ya está registrado", {
-        status: 409,
-      }); // 409 Conflict
+      return new NextResponse("El número de teléfono ya está registrado", { status: 409 });
     }
 
-    // 4. Hasheamos (encriptamos) la contraseña antes de guardarla
     const hashedPassword = await bcrypt.hash(password, 12);
-
-    // 5. Creamos el nuevo usuario en la base de datos usando Prisma
     const userRole: Role =
-      phone === process.env.ADMIN_PHONE ? Role.ADMIN : Role.USER;
+      normalizedPhone === process.env.ADMIN_PHONE ? Role.ADMIN : Role.USER;
 
     const user = await db.user.create({
       data: {
         name,
-        phone,
+        phone: normalizedPhone,
         address,
         hashedPassword,
         role: userRole,
       },
     });
 
-    // 6. Retornamos el usuario creado (sin la contraseña) con un estado 201 (Created)
     return NextResponse.json(user, { status: 201 });
+
   } catch (error) {
     console.error("[REGISTER_POST_ERROR]", error);
     return new NextResponse("Error interno del servidor", { status: 500 });

@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 
 import { Select } from "./ui/Select";
 import { CustomInput } from "./ui/Input";
-import Modal from "@/src/components/ui/Modal";
+import Modal from "@/components/ui/Modal";
 import {
   productOptions,
   deliveryTypeOptions,
@@ -193,6 +193,7 @@ interface OrderFormProps {
 // Componente principal que maneja el estado
 const OrderForm = ({ isLoggedIn, userName }: OrderFormProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [successfulOrderData, setSuccessfulOrderData] = useState<{
     paymentMethod?: string;
     totalPrice?: number;
@@ -251,26 +252,46 @@ const OrderForm = ({ isLoggedIn, userName }: OrderFormProps) => {
         <Formik
           initialValues={initialValues}
           validationSchema={isLoggedIn ? userSchema : guestSchema}
-          onSubmit={(values, { setSubmitting, resetForm }) => {
-            const selectedProduct = productOptions.find(
-              (p) => p.value === values.product
-            );
-            const finalPrice = selectedProduct?.price || 0;
+          onSubmit={async (values, { setSubmitting, resetForm }) => {
+            setError(null);
+            try {
+              const response = await fetch("/api/orders", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(values),
+              });
 
-            setTimeout(() => {
-              openModalWithData({ 
-                paymentMethod: values.paymentMethod,
-                totalPrice: finalPrice,
+              if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || "No se pudo crear la orden.");
+              }
+
+              const newOrder = await response.json();
+
+              openModalWithData({
+                paymentMethod: newOrder.paymentMethod,
+                totalPrice: newOrder.totalPrice,
                 guestName: values.name,
                 guestPhone: values.phone,
               });
-              setSubmitting(false);
+
               resetForm();
-            }, 400);
+            } catch (err) {
+              if (err instanceof Error) {
+                setError(err.message);
+              } else {
+                setError("Ocurrió un error inesperado.");
+              }
+            } finally {
+              setSubmitting(false);
+            }
           }}
         >
           <FormContent isLoggedIn={isLoggedIn} />
         </Formik>
+        {error && (
+          <p className="mt-4 text-sm text-red-600 text-center">{error}</p>
+        )}
       </div>
 
       {/* 4. Pasamos los datos completos al modal */}
@@ -279,9 +300,9 @@ const OrderForm = ({ isLoggedIn, userName }: OrderFormProps) => {
         onClose={closeModal}
         paymentMethod={successfulOrderData?.paymentMethod}
         totalPrice={successfulOrderData?.totalPrice}
+        isGuestOrder={!isLoggedIn}
         guestName={successfulOrderData?.guestName}
         guestPhone={successfulOrderData?.guestPhone}
-        isGuestOrder={!isLoggedIn}
       />
     </>
   );
