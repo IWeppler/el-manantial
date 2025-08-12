@@ -36,6 +36,7 @@ export async function POST(request: Request) {
       paymentMethod,
       name,
       phone,
+      address,
     } = body;
 
     const productFromDb = await db.product.findUnique({
@@ -79,6 +80,7 @@ export async function POST(request: Request) {
         data: {
           guestName: name,
           guestPhone: phone,
+          guestAddress: address,
           product: { connect: { id: productFromDb.id } },
           totalPrice,
           deliveryType: mappedDeliveryType,

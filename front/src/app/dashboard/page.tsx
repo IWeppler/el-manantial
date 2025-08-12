@@ -15,15 +15,16 @@ export default async function DashboardPage() {
   }
 
   // 2. Obtenemos todas las órdenes de la base de datos
-  const orders = await db.order.findMany({
-    orderBy: {
-      orderDate: 'desc', 
-    },
-    include: {
-      user: true,    
-      product: true,
-    },
-  });
+  const [orders, stock] = await Promise.all([
+    db.order.findMany({
+      orderBy: { orderDate: 'desc' },
+      include: { user: true, product: true },
+    }),
+    db.stock.findFirst(),
+  ]);
 
-  return <DashboardClient initialOrders={orders} />;
+  // Si no hay stock, creamos uno por si acaso (no debería pasar con el seed)
+  const initialStockCount = stock?.mapleCount ?? 0;
+
+  return <DashboardClient initialOrders={orders} initialStock={initialStockCount} />;
 }

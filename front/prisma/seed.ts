@@ -1,4 +1,3 @@
-// prisma/seed.ts
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -12,7 +11,7 @@ const productData = [
 ];
 
 async function main() {
-  console.log(`Start seeding ...`);
+  console.log(`Start seeding products...`);
   for (const p of productData) {
     const product = await prisma.product.upsert({
       where: { value: p.value },
@@ -21,7 +20,16 @@ async function main() {
     });
     console.log(`Created/updated product with id: ${product.id}`);
   }
-  console.log(`Seeding finished.`);
+  console.log(`Product seeding finished.`);
+
+  console.log('Seeding initial stock...');
+  await prisma.stock.deleteMany({});
+  const initialStock = await prisma.stock.create({
+    data: {
+      mapleCount: 30,
+    },
+  });
+  console.log(`Initial stock set to ${initialStock.mapleCount} maples.`);
 }
 
 main()

@@ -35,6 +35,12 @@ model Product {
   orders Order[]
 }
 
+model Stock {
+  id          String @id @default(cuid())
+  mapleCount  Int    @default(0)
+  updatedAt   DateTime @updatedAt
+}
+
 
 enum DeliveryType {
   RETIRO_EN_LOCAL
@@ -65,6 +71,7 @@ model Order {
   totalPrice          Int       
   guestName           String?
   guestPhone          String?
+  guestAddress        String?
   user                User?     @relation(fields: [userId], references: [id])
   userId              String?
   deliveryType        DeliveryType
