@@ -4,7 +4,7 @@ import { signIn } from "next-auth/react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import Link from "next/link";
-import { CustomInput } from "./ui/Input";
+import { CustomInput, PasswordInput } from "./ui/Input";
 import { useRouter } from "next/navigation";
 
 const LoginSchema = Yup.object({
@@ -52,17 +52,15 @@ const LoginForm = () => {
         onSubmit={async (values, { setSubmitting }) => {
           // 2. Llama a la función signIn
           const result = await signIn("credentials", {
-            redirect: false, // No redirigir automáticamente
+            redirect: false,
             phone: values.phone,
             password: values.password,
           });
 
           if (result?.error) {
-            // Aquí puedes manejar el error, por ejemplo, mostrar un mensaje
             console.error("Error de inicio de sesión:", result.error);
             alert("Credenciales incorrectas. Inténtalo de nuevo.");
           } else {
-            // Si el login es exitoso, redirige a la página principal
             router.push("/");
           }
           setSubmitting(false);
@@ -78,17 +76,11 @@ const LoginForm = () => {
             />
 
             <div>
-              <CustomInput
+              <PasswordInput
                 label="Contraseña"
                 name="password"
-                type="password"
                 placeholder="Tu contraseña"
               />
-              {/* <div className="mt-2 text-right">
-                <Link href="/recuperar-clave" className="text-sm font-medium text-primary hover:underline">
-                  ¿Olvidaste tu contraseña?
-                </Link>
-              </div> */}
             </div>
 
             <button

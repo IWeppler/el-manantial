@@ -6,7 +6,7 @@ import * as Yup from "yup";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CustomInput } from "./ui/Input";
+import { CustomInput, PasswordInput } from "./ui/Input";
 
 interface RegisterFormValues {
   name: string;
@@ -146,7 +146,7 @@ export const RegisterForm = () => {
                   label="Número de WhatsApp"
                   name="phone"
                   type="tel"
-                  placeholder="03491 547021"
+                  placeholder="3491547021"
                 />
               </>
             )}
@@ -157,11 +157,10 @@ export const RegisterForm = () => {
               type="text"
               placeholder="Calle Falsa 123, Tostado"
             />
-            <CustomInput
-              label="Creá una Contraseña"
+            <PasswordInput
+              label="Contraseña"
               name="password"
-              type="password"
-              placeholder="Mínimo 5 caracteres"
+              placeholder="Tu contraseña"
             />
 
             {/* Mostramos el mensaje de error si existe */}

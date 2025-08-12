@@ -1,10 +1,9 @@
-// lib/auth.ts
-
 import { type NextAuthOptions, type DefaultSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { db } from "@/lib/db";
 import bcrypt from "bcrypt";
 import { Role } from "@prisma/client";
+import { normalizePhoneNumber } from "@/lib/utils";
 
 // Declaraciones de tipos para extender NextAuth
 declare module "next-auth" {
@@ -34,8 +33,10 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.phone || !credentials?.password) return null;
 
+        const normalizedPhone = normalizePhoneNumber(credentials.phone);
+
         const user = await db.user.findUnique({
-          where: { phone: credentials.phone },
+          where: { phone: normalizedPhone },
         });
         if (!user) return null;
 
@@ -48,6 +49,8 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user.id,
           name: user.name,
+          email: null,
+          image: null,
           phone: user.phone,
           role: user.role,
         };
