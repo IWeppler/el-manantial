@@ -2,8 +2,7 @@
 
 import { Formik, Form, Field, useFormikContext } from "formik";
 import * as Yup from "yup";
-import { useState, useEffect } from "react";
-
+import { useState, useEffect, useMemo } from "react";
 import { Select } from "./ui/Select";
 import { CustomInput } from "./ui/Input";
 import Modal from "@/components/ui/Modal";
@@ -16,7 +15,9 @@ import {
 } from "../lib/data-form";
 import Link from "next/link";
 
-// Estructura de los valores
+const SHIPPING_COST = 500;
+const FREE_SHIPPING_THRESHOLD_MAPLES = 3;
+
 interface FormValues {
   name: string;
   phone: string;
@@ -61,13 +62,32 @@ const FormContent = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
   const { values, isValid, dirty } = useFormikContext<FormValues>();
   const [totalPrice, setTotalPrice] = useState(0);
 
+  const maples = useMemo(
+    () => parseInt(values.product || "0", 10) / 30,
+    [values.product]
+  );
+  const isShippingFree = maples >= FREE_SHIPPING_THRESHOLD_MAPLES;
+
   useEffect(() => {
     const selectedProduct = productOptions.find(
       (p) => p.value === values.product
     );
     const productPrice = selectedProduct?.price || 0;
-    setTotalPrice(productPrice);
-  }, [values.product]);
+
+    let shippingCost = 0;
+    if (values.deliveryType === "delivery" && !isShippingFree) {
+      shippingCost = SHIPPING_COST;
+    }
+
+    setTotalPrice(productPrice + shippingCost);
+  }, [values.product, values.deliveryType, isShippingFree]);
+
+  const formatPrice = (price: number) =>
+    price.toLocaleString("es-AR", {
+      style: "currency",
+      currency: "ARS",
+      minimumFractionDigits: 0,
+    });
 
   return (
     <>
@@ -112,11 +132,13 @@ const FormContent = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
 
         <Select label="2. ¿Retirás o te lo enviamos?" name="deliveryType">
           <option value="">Selecciona una opción...</option>
-          {deliveryTypeOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
+          <option value={deliveryTypeOptions[0].value}>
+            {deliveryTypeOptions[0].label}
+          </option>
+          <option value={deliveryTypeOptions[1].value}>
+            {deliveryTypeOptions[1].label}{" "}
+            {isShippingFree ? "(¡Gratis!)" : `(+${formatPrice(SHIPPING_COST)})`}
+          </option>
         </Select>
 
         {values.deliveryType === "delivery" && (
@@ -125,7 +147,7 @@ const FormContent = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
             label="Dirección de Envío"
             name="address"
             type="text"
-            placeholder="Av. Siempre Viva 123"
+            placeholder="Gobernador Crespo 1658"
           />
         )}
 
@@ -184,7 +206,6 @@ const FormContent = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
   );
 };
 
-// Propiedades del componente principal
 interface OrderFormProps {
   isLoggedIn: boolean;
   userName?: string;
@@ -199,6 +220,7 @@ const OrderForm = ({ isLoggedIn, userName }: OrderFormProps) => {
     totalPrice?: number;
     guestName?: string;
     guestPhone?: string;
+    deliveryType?: string;
   } | null>(null);
 
   const openModalWithData = (data: {
@@ -206,6 +228,7 @@ const OrderForm = ({ isLoggedIn, userName }: OrderFormProps) => {
     totalPrice?: number;
     guestName?: string;
     guestPhone?: string;
+    deliveryType?: string;
   }) => {
     setSuccessfulOrderData(data);
     setIsModalOpen(true);
@@ -273,6 +296,7 @@ const OrderForm = ({ isLoggedIn, userName }: OrderFormProps) => {
                 totalPrice: newOrder.totalPrice,
                 guestName: values.name,
                 guestPhone: values.phone,
+                deliveryType: values.deliveryType,
               });
 
               resetForm();
@@ -303,6 +327,7 @@ const OrderForm = ({ isLoggedIn, userName }: OrderFormProps) => {
         isGuestOrder={!isLoggedIn}
         guestName={successfulOrderData?.guestName}
         guestPhone={successfulOrderData?.guestPhone}
+        deliveryType={successfulOrderData?.deliveryType}
       />
     </>
   );

@@ -7,7 +7,7 @@ import {
   TransitionChild,
 } from "@headlessui/react";
 import { Fragment } from "react";
-import { CheckCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, XMarkIcon, HomeIcon, CreditCardIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 
 interface SuccessModalProps {
@@ -18,6 +18,7 @@ interface SuccessModalProps {
   guestName?: string;
   guestPhone?: string;
   isGuestOrder: boolean;
+  deliveryType?: string;
 }
 
 export default function SuccessModal({
@@ -28,6 +29,7 @@ export default function SuccessModal({
   isGuestOrder,
   guestName,
   guestPhone,
+  deliveryType,
 }: SuccessModalProps) {
   const router = useRouter();
   const priceInPesos = totalPrice ? totalPrice / 100 : 0;
@@ -35,18 +37,17 @@ export default function SuccessModal({
   const CBU = process.env.NEXT_PUBLIC_MP_CBU;
   const ALIAS = process.env.NEXT_PUBLIC_MP_ALIAS;
   const TELEFONO = process.env.NEXT_PUBLIC_CONTACT_PHONE;
+  const DIRECCION = process.env.NEXT_PUBLIC_PICKUP_ADDRESS;
 
   const handleCreateAccountClick = () => {
-    // Guardamos los datos del invitado en el sessionStorage
     sessionStorage.setItem(
       "guestDataForRegistration",
-      JSON.stringify({
-        name: guestName,
-        phone: guestPhone,
-      })
+      JSON.stringify({ name: guestName, phone: guestPhone })
     );
     router.push("/register");
   };
+
+  const showNextSteps = deliveryType === "pickup" || paymentMethod === "TRANSFERENCIA";
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -80,34 +81,25 @@ export default function SuccessModal({
                   className="absolute top-4 right-4 text-gray-400 hover:text-gray-500"
                   onClick={onClose}
                 >
-                  <span className="sr-only ">Cerrar</span>
+                  <span className="sr-only">Cerrar</span>
                   <XMarkIcon className="h-6 w-6 cursor-pointer" />
                 </button>
 
                 <div className="flex flex-col items-center">
                   <CheckCircleIcon className="h-16 w-16 text-green-500" />
-
-                  <DialogTitle
-                    as="h3"
-                    className="mt-4 text-2xl font-bold leading-6 text-gray-900"
-                  >
+                  <DialogTitle as="h3" className="mt-4 text-2xl font-bold leading-6 text-gray-900">
                     ¡Pedido Realizado!
                   </DialogTitle>
-
                   <div className="mt-2">
                     <p className="text-sm text-gray-500 text-center">
-                      Recibimos tu pedido correctamente. Nos pondremos en
-                      contacto para coordinar la entrega.
+                      Recibimos tu pedido correctamente. Nos pondremos en contacto para coordinar.
                     </p>
                   </div>
 
                   {totalPrice && totalPrice > 0 && (
                     <div className="mt-4 w-full text-center">
-                      <p className="text-sm text-gray-500">
-                        Monto total a pagar:
-                      </p>
+                      <p className="text-sm text-gray-500">Monto total a pagar:</p>
                       <p className="text-3xl font-bold text-gray-900">
-                        {/* 2. Usamos la nueva variable para formatear */}
                         {priceInPesos.toLocaleString("es-AR", {
                           style: "currency",
                           currency: "ARS",
@@ -117,33 +109,42 @@ export default function SuccessModal({
                     </div>
                   )}
 
-                  {/* Información Condicional de Pago */}
-                  {paymentMethod === "transferencia" && (
-                    <div className="mt-6 w-full rounded-lg bg-slate-50 p-4 border border-slate-200">
-                      <p className="text-sm font-semibold text-gray-800">
-                        Datos para la transferencia:
-                      </p>
-                      <div className="mt-2 space-y-1">
-                        <p className="text-sm text-gray-600">
-                          <strong>CBU:</strong> {CBU}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          <strong>Alias:</strong> {ALIAS}
-                        </p>
-                      </div>
-                      <p className="mt-3 text-xs text-gray-700">
-                        Por favor, envianos el comprobante por WhatsApp al{" "}
-                        {TELEFONO} una vez realizado el pago.
-                      </p>
+                  {/* --- SECCIÓN DE PRÓXIMOS PASOS (JERARQUIZADA) --- */}
+                  {showNextSteps && (
+                    <div className="mt-6 w-full rounded-lg bg-slate-50 p-4 border border-slate-200 text-left">
+                      <h4 className="text-sm font-semibold text-gray-800 text-center mb-3">Próximos Pasos</h4>
+                      
+                      {deliveryType === "pickup" && (
+                        <div className="flex items-start">
+                          <HomeIcon className="h-5 w-5 text-gray-500 mr-3 mt-1" />
+                          <div>
+                            <p className="text-sm font-semibold text-neutral-800">Retirá tu pedido en:</p>
+                            <p className="text-sm font-medium text-neutral-700">{DIRECCION}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {paymentMethod === "TRANSFERENCIA" && (
+                        <div className={`flex items-start ${deliveryType === "pickup" ? 'mt-4 pt-4 border-t' : ''}`}>
+                          <CreditCardIcon className="h-5 w-5 text-neutral-500 mr-3 mt-1" />
+                          <div>
+                            <p className="text-sm font-semibold text-neutral-800">Datos para la transferencia:</p>
+                            <div className="mt-1 space-y-0.5 text-xs text-neutral-600">
+                              <p><strong>CBU:</strong> {CBU}</p>
+                              <p><strong>Alias:</strong> {ALIAS}</p>
+                            </div>
+                            <p className="mt-2 text-sm text-neutral-500">
+                              Envianos el comprobante por WhatsApp al <span className="text-sm font-medium text-neutral-700">{TELEFONO}</span>
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  {/* 2. Bloque condicional para la invitación al registro */}
                   {isGuestOrder && (
-                    <div className="mt-6 w-full text-center p-4 bg-accent/10 rounded-lg border border-accent">
-                      <p className="font-semibold text-primary">
-                        Hace tu próxima compra más rápida
-                      </p>
+                    <div className="mt-6 w-full text-center p-4 bg-amber-50 rounded-lg border border-amber-200">
+                      <p className="font-semibold text-amber-900">Hace tu próxima compra más rápida</p>
                       <button
                         type="button"
                         className="mt-3 inline-flex justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-foreground cursor-pointer"

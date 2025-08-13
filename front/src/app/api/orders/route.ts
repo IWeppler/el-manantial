@@ -4,17 +4,18 @@ import { db } from "@/lib/db";
 import { DeliveryType, PaymentMethod, DeliveryTime } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 
+const SHIPPING_COST_CENTS = 50000;
+const FREE_SHIPPING_THRESHOLD_MAPLES = 3;
+
 const mapToEnum = <T extends object>(
   enumObject: T,
   value: string
 ): T[keyof T] => {
-  // Mapeo para casos especiales donde el 'value' del frontend no coincide con el enum
   const specialMappings: { [key: string]: string } = {
     pickup: "RETIRO_EN_LOCAL",
     delivery: "ENVIO_A_DOMICILIO",
   };
 
-  // Usamos el mapeo especial si existe, si no, usamos el valor original
   const mappedValue = specialMappings[value] || value;
 
   const key = mappedValue.toUpperCase().replace(":", "_") as keyof T;
@@ -47,21 +48,29 @@ export async function POST(request: Request) {
       return new NextResponse("Producto no encontrado", { status: 404 });
     }
 
-    const totalPrice = productFromDb.price;
+    let shippingCost = 0;
+    const mappedDeliveryType = mapToEnum(DeliveryType, deliveryType);
+
+    if (mappedDeliveryType === "ENVIO_A_DOMICILIO") {
+      const maples = parseInt(productFromDb.value, 10) / 30;
+      if (maples < FREE_SHIPPING_THRESHOLD_MAPLES) {
+        shippingCost = SHIPPING_COST_CENTS;
+      }
+    }
+
+    const totalPrice = productFromDb.price + shippingCost;
     let newOrder;
 
-    const mappedDeliveryType = mapToEnum(DeliveryType, deliveryType);
     const mappedPaymentMethod = mapToEnum(PaymentMethod, paymentMethod);
     const mappedDeliveryTime = mapToEnum(DeliveryTime, deliveryTime);
 
     if (session?.user?.id) {
       // --- CASO 1: El usuario está LOGUEADO ---
-      // Creamos la orden directamente, asociándola al ID del usuario.
       newOrder = await db.order.create({
         data: {
           user: { connect: { id: session.user.id } },
           product: { connect: { id: productFromDb.id } },
-          totalPrice,
+          totalPrice: totalPrice,
           deliveryType: mappedDeliveryType,
           deliveryDay,
           deliveryTime: mappedDeliveryTime,
