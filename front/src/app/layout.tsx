@@ -2,6 +2,8 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import Providers from "./providers";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -45,13 +47,13 @@ export default function RootLayout({
 }>) {
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Comercio de Huevos",
-    name: "El nuevo Manantial",
-    url: "https://atleticotostado.vercel.app",
-    logo: "https://atleticotostado.vercel.app/logo-cat.png",
+    "@type": "LocalBusiness",
+    name: "El Nuevo Manantial",
+    url: "https://el-manantial-two.vercel.app",
+    logo: "https://el-manantial-two.vercel.app/logo.jpg",
     address: {
       "@type": "PostalAddress",
-      streetAddress: "Gobernador Crespo 1650",
+      streetAddress: "Gobernador Crespo 1658",
       addressLocality: "Tostado",
       addressRegion: "Santa Fe",
       postalCode: "3060",
@@ -59,7 +61,7 @@ export default function RootLayout({
     },
     contactPoint: {
       "@type": "ContactPoint",
-      telephone: "+54-3491-470123",
+      telephone: "+5493491699012",
       contactType: "customer service",
     },
   };
@@ -74,6 +76,8 @@ export default function RootLayout({
       </head>
       <body className={`${jakarta.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
