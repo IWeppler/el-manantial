@@ -1,16 +1,21 @@
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import OrderForm from "../components/OrderForm";
 import Image from "next/image";
 import { LogoutButton } from "../components/ui/Buttons";
 import Link from "next/link";
 
 export default async function HomePage() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
 
   return (
-    <main className="min-h-screen">
-      {/* Columna 1: Formulario con scroll y logo */}
-      <div className="w-full md:w-[60%] h-screen md:overflow-y-auto flex justify-center py-8 md:p-12 scrollbar-hide px-2 bg-[#f5f5f5] md:bg-white">
+    <main className="flex flex-col md:flex-row">
+      <div
+        className="w-full md:w-[60%] min-h-screen 
+      bg-gradient-to-br from-amber-300 via-orange-300 to-red-400 
+      md:bg-none md:bg-white 
+      flex justify-center items-start p-4 pt-12 md:p-12 overflow-y-auto scrollbar-hide"
+      >
         <div className="relative w-full max-w-md">
           {session && <LogoutButton />}
           <div className="flex justify-center mb-4">
@@ -45,8 +50,9 @@ export default async function HomePage() {
         <Image
           src={session ? "/is-logged-eggs.png" : "/main.png"}
           alt="Gallinas felices en un campo verde"
-          layout="fill"
-          objectFit="cover"
+          fill
+          className="object-cover"
+          sizes="40vw"
           priority
         />
       </div>
