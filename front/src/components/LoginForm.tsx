@@ -39,7 +39,7 @@ const LoginForm = () => {
           ¿Aún no tenés una?{" "}
           <Link
             href="/register"
-            className="font-medium text-primary hover:underline"
+            className="font-medium text-orange-500 hover:underline"
           >
             Registrate acá
           </Link>
@@ -86,7 +86,7 @@ const LoginForm = () => {
             <button
               type="submit"
               disabled={!dirty || !isValid || isSubmitting}
-              className="w-full cursor-pointer rounded-md border border-transparent bg-primary px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-neutral-950 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className="w-full cursor-pointer rounded-md border border-transparent bg-orange-500 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-neutral-950 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               {isSubmitting ? "Ingresando..." : "Ingresar"}
             </button>

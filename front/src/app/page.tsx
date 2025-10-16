@@ -48,7 +48,7 @@ export default async function HomePage() {
             <Link
               href="https://ignacioweppler.com/"
               target="_blank"
-              className="text-primary hover:underline"
+              className="text-orange-500 hover:underline"
             >
               Ignacio Weppler
             </Link>

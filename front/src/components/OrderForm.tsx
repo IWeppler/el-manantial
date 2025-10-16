@@ -9,6 +9,7 @@ import { CustomInput } from "@/components/ui/CustomInput";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { Button } from "@/components/ui/button";
 import OrderSuccessModal from "./ui/OrderSuccessModal";
+import Link from "next/link";
 
 // --- TIPOS ---
 type PriceTier = { minQuantity: number; price: number };
@@ -240,13 +241,19 @@ const OrderForm = ({ isLoggedIn, userName, settings, schedules }: OrderFormProps
             <div className="w-full mx-auto">
                 {isLoggedIn ? (
                     <div className="mb-8 text-center">
-                        <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">¡Hola de nuevo, <span className="text-primary">{userName}!</span></h2>
+                        <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">¡Hola de nuevo, <span className="text-orange-500">{userName}!</span></h2>
                         <p className="mt-2 text-lg text-gray-600">Listo para tu próximo pedido.</p>
                     </div>
                 ) : (
-                    <div className="mb-4 text-center">
+                    <div className="mb-6 text-center">
                         <h2 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">Pedí tus huevos de campo</h2>
-                        <p className=" text-lg text-gray-600">Completá el formulario y nos pondremos en contacto.</p>
+                        <p className="mt-2 text-lg text-gray-600">Completá el formulario y nos pondremos en contacto.</p>
+                        <p className="mt-2 text-md text-gray-600">
+                            ¿Ya tenés cuenta?{' '}
+                            <Link href="/login" className="font-semibold text-orange-500 hover:underline">
+                                Iniciá sesión
+                            </Link>
+                        </p>
                     </div>
                 )}
                 
