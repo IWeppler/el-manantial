@@ -5,7 +5,6 @@ import { Settings, Schedule, PaymentMethod, ScheduleType } from "@prisma/client"
 import { Formik, Form, useFormikContext, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import axios, { isAxiosError } from "axios";
-import Modal from "@/components/ui/Modal";
 import { CustomInput } from "@/components/ui/CustomInput";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { Button } from "@/components/ui/button";

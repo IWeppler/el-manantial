@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useField } from "formik";
 import { Eye, EyeOff } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/inputshadcn";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
