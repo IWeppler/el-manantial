@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { z } from "zod"; // Import zod for validation
 import { db } from "../../../lib/db";
-import { normalizePhoneNumber } from "@/lib/utils";
 
 // 1. Define a schema for input validation using Zod
 const registerSchema = z.object({
@@ -28,7 +27,7 @@ export async function POST(request: Request) {
     const { name, phone, password, address } = validation.data;
     
     // 3. Normalize the phone number and check for existing user
-    const normalizedPhone = normalizePhoneNumber(phone);
+    const normalizedPhone = (phone);
     const existingUser = await db.user.findUnique({
       where: { phone: normalizedPhone },
     });

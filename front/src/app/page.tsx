@@ -4,9 +4,18 @@ import OrderForm from "../components/OrderForm";
 import Image from "next/image";
 import { LogoutButton } from "../components/ui/Buttons";
 import Link from "next/link";
+import { db } from "@/lib/db";
 
 export default async function HomePage() {
   const session = await getServerSession(authOptions);
+  const [settings, schedules] = await Promise.all([
+    db.settings.findFirst({ include: { priceTiers: true } }),
+    db.schedule.findMany({ where: { isActive: true } }),
+  ]);
+
+  if (!settings || !schedules) {
+    return <p>Sistema de pedidos no disponible.</p>;
+  }
 
   return (
     <main className="flex flex-col md:flex-row">
@@ -16,7 +25,7 @@ export default async function HomePage() {
       md:bg-none md:bg-white 
       flex justify-center items-start p-4 pt-12 md:p-12 overflow-y-auto scrollbar-hide"
       >
-        <div className="relative w-full max-w-md">
+        <div className="relative w-full max-w-lg">
           {session && <LogoutButton />}
           <div className="flex justify-center mb-4">
             <Image
@@ -29,13 +38,15 @@ export default async function HomePage() {
           </div>
 
           <OrderForm
-            isLoggedIn={!!session}
-            userName={session?.user?.name ?? "Cliente"}
+            isLoggedIn={!!session?.user}
+            userName={session?.user?.name}
+            settings={settings}
+            schedules={schedules}
           />
           <p className="text-neutral-500 text-sm font-medium text-center my-4">
             Desarrollado por{" "}
             <Link
-              href="https://ignacioweppler.vercel.app/"
+              href="https://ignacioweppler.com/"
               target="_blank"
               className="text-primary hover:underline"
             >

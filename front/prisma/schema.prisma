@@ -70,11 +70,11 @@ enum ScheduleType {
 
 model Schedule {
   id        String       @id @default(cuid())
-  dayOfWeek String 
-  startTime String 
-  endTime   String
-  type      ScheduleType 
-  isActive  Boolean      @default(true) 
+  dayOfWeek String       // "Martes", "Viernes", etc.
+  startTime String       // "21:00"
+  endTime   String       // "22:00"
+  type      ScheduleType // DELIVERY o PICKUP
+  isActive  Boolean      @default(true)
   orders    Order[]
 }
 

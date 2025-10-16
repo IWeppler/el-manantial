@@ -4,7 +4,7 @@ import { signIn } from "next-auth/react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import Link from "next/link";
-import { CustomInput, PasswordInput } from "./ui/Input";
+import { CustomInput, PasswordInput } from "./ui/CustomInput";
 import { useRouter } from "next/navigation";
 
 const LoginSchema = Yup.object({

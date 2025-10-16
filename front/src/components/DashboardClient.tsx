@@ -166,7 +166,7 @@ export function DashboardClient({
         )}
 
         {activeTab === "configuracion" && (
-          <SettingsPanel initialSettings={initialSettings} />
+          <SettingsPanel initialSettings={initialSettings} initialSchedules={initialSchedules} />
         )}
       </main>
 

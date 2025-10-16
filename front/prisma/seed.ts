@@ -1,97 +1,114 @@
-import { PrismaClient, Role, ScheduleType } from '@prisma/client';
+import { PrismaClient, Role, ScheduleType, ExpenseCategory } from '@prisma/client';
 import { hash } from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Iniciando el proceso de seed...");
+  console.log("🚀 Iniciando el proceso de seed...");
 
-  // Borrado de datos
+  // 1. Borrado de datos en orden lógico (hijos primero)
+  console.log("🗑️  Limpiando la base de datos...");
   await prisma.priceTier.deleteMany({});
   await prisma.order.deleteMany({});
-  await prisma.schedule.deleteMany({});
-  await prisma.user.deleteMany({});
-  await prisma.stock.deleteMany({});
-  await prisma.settings.deleteMany({});
   await prisma.eggProduction.deleteMany({});
   await prisma.expense.deleteMany({});
-  console.log("Datos antiguos eliminados.");
+  await prisma.schedule.deleteMany({});
+  await prisma.settings.deleteMany({});
+  await prisma.user.deleteMany({});
+  await prisma.stock.deleteMany({});
+  console.log("✅ Datos antiguos eliminados.");
 
-  // 2. Configuraciones iniciales
-  await prisma.settings.create({
+  // 2. Crear configuraciones y descuentos
+  console.log("⚙️  Creando configuraciones del negocio...");
+  const settings = await prisma.settings.create({
     data: {
       pricePerMaple: 8000,
-      deliveryFee: 500,
+      pricePerHalfDozen: 4500,
+      deliveryFee: 1000,
       freeDeliveryThreshold: 24000,
       minimumOrderMaples: 1,
       businessName: "El Manantial",
       whatsappNumber: "5491122334455",
-      pickupAddress: "Av. Siempre Viva 742"
+      pickupAddress: "Av. Siempre Viva 742",
     },
   });
-  console.log("Configuraciones iniciales del negocio creadas.");
 
-  // 3. Horarios de ejemplo
+  await prisma.priceTier.createMany({
+    data: [
+      { minQuantity: 3, price: 7000, settingsId: settings.id },
+      { minQuantity: 5, price: 6500, settingsId: settings.id },
+    ]
+  });
+  console.log("✅ Configuraciones y descuentos creados.");
+
+  // 3. Crear horarios de ejemplo
+  console.log("🗓️  Creando horarios de ejemplo...");
   await prisma.schedule.createMany({
     data: [
       { dayOfWeek: 'Lunes', startTime: '09:00', endTime: '20:00', type: ScheduleType.DELIVERY, isActive: true },
-      { dayOfWeek: 'Martes', startTime: '09:00', endTime: '20:00', type: ScheduleType.DELIVERY, isActive: true },
       { dayOfWeek: 'Miércoles', startTime: '09:00', endTime: '20:00', type: ScheduleType.DELIVERY, isActive: true },
-      { dayOfWeek: 'Viernes', startTime: '09:00', endTime: '20:00', type: ScheduleType.PICKUP, isActive: true },
-      { dayOfWeek: 'Sábado', startTime: '09:00', endTime: '13:00', type: ScheduleType.PICKUP, isActive: false },
+      { dayOfWeek: 'Viernes', startTime: '10:00', endTime: '18:00', type: ScheduleType.PICKUP, isActive: true },
+      { dayOfWeek: 'Sábado', startTime: '09:00', endTime: '13:00', type: ScheduleType.PICKUP, isActive: true },
     ],
   });
-  console.log("Horarios de ejemplo creados.");
+  console.log("✅ Horarios creados.");
 
-  // 4. Stock inicial
+  // 4. Crear stock inicial
+  console.log("🥚 Creando stock inicial...");
   await prisma.stock.create({
-    data: {
-      mapleCount: 100,
-    },
+    data: { mapleCount: 50 },
   });
-  console.log("Stock inicial establecido en 100.");
+  console.log("✅ Stock inicial establecido.");
 
-  // --- 5. MODIFICACIÓN: Crear 3 usuarios administradores ---
-  const adminPassword = await hash('admin12345.', 12); // Usamos la misma contraseña para todos
+  // 5. Crear usuarios administradores
+  console.log("👤 Creando usuarios administradores...");
+  const adminPassword = await hash('admin12345.', 12);
 
-  await prisma.user.createMany({
-    data: [
-      {
-        name: 'Ignacio',
-        phone: '1234567891',
-        role: Role.ADMIN,
-        hashedPassword: adminPassword,
-      },
-      {
-        name: 'Bautista',
-        phone: '1234567892',
-        role: Role.ADMIN,
-        hashedPassword: adminPassword,
-      },
-      {
-        name: 'Nicolas',
-        phone: '1234567893',
-        role: Role.ADMIN,
-        hashedPassword: adminPassword,
-      },
-    ],
+  const ignacio = await prisma.user.create({
+    data: { name: 'Ignacio', phone: '1234567890', role: Role.ADMIN, hashedPassword: adminPassword },
+  });
+  const bautista = await prisma.user.create({
+    data: { name: 'Bautista', phone: '1234567891', role: Role.ADMIN, hashedPassword: adminPassword },
+  });
+  const nicolas = await prisma.user.create({
+    data: { name: 'Nicolas', phone: '1234567892', role: Role.ADMIN, hashedPassword: adminPassword },
   });
   
-  // Mensajes de consola actualizados y claros
-  console.log("Usuarios administradores creados con éxito.");
-  console.log("-----------------------------------------------");
-  console.log("Credenciales de Acceso (Contraseña: admin123)");
-  console.log("- Ignacio: 1234567891");
-  console.log("- Bautista: 1234567892");
-  console.log("- Nicolas: 1234567893");
-  console.log("-----------------------------------------------");
+  console.log("✅ Administradores creados.");
 
-  console.log("Seed completado!");
+  // 6. Crear datos de ejemplo para analíticas
+  console.log("📊 Creando datos de ejemplo para analíticas...");
+  await prisma.eggProduction.createMany({
+    data: [
+      { date: new Date(), quantity: 150, userId: ignacio.id },
+      { date: new Date(new Date().setDate(new Date().getDate() - 1)), quantity: 145, userId: bautista.id },
+    ]
+  });
+
+  await prisma.expense.createMany({
+    data: [
+      { date: new Date(), description: "Bolsa de alimento 50kg", amount: 25000, category: ExpenseCategory.ALIMENTO, userId: ignacio.id },
+      { date: new Date(new Date().setDate(new Date().getDate() - 1)), description: "Combustible reparto", amount: 10000, category: ExpenseCategory.TRANSPORTE, userId: bautista.id },
+    ]
+  });
+  console.log("✅ Datos de analíticas creados.");
+
+  // --- Mensajes finales ---
+  console.log("\n🎉 Seed completado exitosamente!");
+  console.log("-----------------------------------------------");
+  console.log(`🔑 Contraseña para todos los admins: admin12345.`);
+  console.log("-----------------------------------------------");
+  console.log("📱 Teléfonos de acceso:");
+  console.log(`- ${ignacio.name}: ${ignacio.phone}`);
+  console.log(`- ${bautista.name}: ${bautista.phone}`);
+  console.log(`- ${nicolas.name}: ${nicolas.phone}`);
+  console.log("-----------------------------------------------\n");
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
+  .catch(async (e) => {
+    console.error("❌ Error durante el proceso de seed:", e);
+    await prisma.$disconnect();
     process.exit(1);
   })
   .finally(async () => {

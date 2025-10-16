@@ -1,98 +1,21 @@
-"use client";
-import { useState } from "react";
-import { useField } from "formik";
-import clsx from "clsx";
-import { Eye, EyeClosed } from 'lucide-react';
-interface CustomInputProps {
-  label: string;
-  name: string;
-  type: string;
-  placeholder?: string;
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  return (
+    <input
+      type={type}
+      data-slot="input"
+      className={cn(
+        "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+        "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+        className
+      )}
+      {...props}
+    />
+  )
 }
 
-export const CustomInput = ({ label, ...props }: CustomInputProps) => {
-  const [field, meta] = useField(props);
-
-  return (
-    <div>
-      <label
-        htmlFor={props.name}
-        className="block text-sm font-medium text-foreground"
-      >
-        {label}
-      </label>
-      <div className="mt-1">
-        <input
-          {...field}
-          {...props}
-          // 2. Usar clsx para construir las clases
-          className={clsx(
-            "block w-full px-2 py-3 rounded-md border bg-white sm:text-sm",
-            {
-              "border-red-700": meta.touched && meta.error,
-              "border-gray-300": !(meta.touched && meta.error),
-            }
-          )}
-        />
-        {meta.touched && meta.error ? (
-          <p className="mt-2 text-sm text-red-600">{meta.error}</p>
-        ) : null}
-      </div>
-    </div>
-  );
-};
-
-
-
-interface PasswordInputProps {
-  label: string;
-  name: string;
-  placeholder?: string;
-}
-
-export const PasswordInput = ({ label, ...props }: PasswordInputProps) => {
-  const [field, meta] = useField(props);
-  const [showPassword, setShowPassword] = useState(false);
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
-  return (
-    <div>
-      <label
-        htmlFor={props.name}
-        className="block text-sm font-medium text-foreground"
-      >
-        {label}
-      </label>
-      {/* Hacemos el contenedor relativo para posicionar el botón dentro */}
-      <div className="mt-1 relative">
-        <input
-          {...field}
-          {...props}
-          type={showPassword ? "text" : "password"} 
-          className={clsx(
-            "block w-full px-2 py-3 pr-10 rounded-md border bg-white sm:text-sm",
-            {
-              "border-red-700": meta.touched && meta.error,
-              "border-gray-300": !(meta.touched && meta.error),
-            }
-          )}
-        />
-        {/* Botón para mostrar/ocultar la contraseña */}
-        <button
-          type="button"
-          onClick={togglePasswordVisibility}
-          className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 cursor-pointer"
-          aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-        >
-          {showPassword ? <EyeClosed size={20} /> : <Eye size={20} />}
-        </button>
-      </div>
-      {meta.touched && meta.error ? (
-        <p className="mt-2 text-sm text-red-600">{meta.error}</p>
-      ) : null}
-    </div>
-  );
-};
+export { Input }

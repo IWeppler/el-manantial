@@ -6,7 +6,8 @@ import * as Yup from "yup";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CustomInput, PasswordInput } from "./ui/Input";
+import { CustomInput, PasswordInput } from "./ui/CustomInput";
+
 
 interface RegisterFormValues {
   name: string;
