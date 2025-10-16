@@ -1,6 +1,6 @@
 import { useField } from "formik";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./selectshadcn";
 interface FormikShadcnSelectProps {
   name: string;
   label: string;
