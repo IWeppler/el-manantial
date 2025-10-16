@@ -1,35 +1,92 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Role, ScheduleType } from '@prisma/client';
+import { hash } from 'bcrypt';
 
 const prisma = new PrismaClient();
 
-const productData = [
-  { name: "1 Maple (30)", value: "30", price: 800000 },
-  { name: "2 Maples (60)", value: "60", price: 1600000 },
-  { name: "3 Maples (90)", value: "90", price: 2400000 },
-  { name: "4 Maples (120)", value: "120", price: 3200000 },
-  { name: "5 Maples (150)", value: "150", price: 4000000 },
-];
-
 async function main() {
-  console.log(`Start seeding products...`);
-  for (const p of productData) {
-    const product = await prisma.product.upsert({
-      where: { value: p.value },
-      update: {},
-      create: p,
-    });
-    console.log(`Created/updated product with id: ${product.id}`);
-  }
-  console.log(`Product seeding finished.`);
+  console.log("Iniciando el proceso de seed...");
 
-  console.log('Seeding initial stock...');
+  // Borrado de datos
+  await prisma.priceTier.deleteMany({});
+  await prisma.order.deleteMany({});
+  await prisma.schedule.deleteMany({});
+  await prisma.user.deleteMany({});
   await prisma.stock.deleteMany({});
-  const initialStock = await prisma.stock.create({
+  await prisma.settings.deleteMany({});
+  await prisma.eggProduction.deleteMany({});
+  await prisma.expense.deleteMany({});
+  console.log("Datos antiguos eliminados.");
+
+  // 2. Configuraciones iniciales
+  await prisma.settings.create({
     data: {
-      mapleCount: 30,
+      pricePerMaple: 8000,
+      deliveryFee: 500,
+      freeDeliveryThreshold: 24000,
+      minimumOrderMaples: 1,
+      businessName: "El Manantial",
+      whatsappNumber: "5491122334455",
+      pickupAddress: "Av. Siempre Viva 742"
     },
   });
-  console.log(`Initial stock set to ${initialStock.mapleCount} maples.`);
+  console.log("Configuraciones iniciales del negocio creadas.");
+
+  // 3. Horarios de ejemplo
+  await prisma.schedule.createMany({
+    data: [
+      { dayOfWeek: 'Lunes', startTime: '09:00', endTime: '20:00', type: ScheduleType.DELIVERY, isActive: true },
+      { dayOfWeek: 'Martes', startTime: '09:00', endTime: '20:00', type: ScheduleType.DELIVERY, isActive: true },
+      { dayOfWeek: 'Miércoles', startTime: '09:00', endTime: '20:00', type: ScheduleType.DELIVERY, isActive: true },
+      { dayOfWeek: 'Viernes', startTime: '09:00', endTime: '20:00', type: ScheduleType.PICKUP, isActive: true },
+      { dayOfWeek: 'Sábado', startTime: '09:00', endTime: '13:00', type: ScheduleType.PICKUP, isActive: false },
+    ],
+  });
+  console.log("Horarios de ejemplo creados.");
+
+  // 4. Stock inicial
+  await prisma.stock.create({
+    data: {
+      mapleCount: 100,
+    },
+  });
+  console.log("Stock inicial establecido en 100.");
+
+  // --- 5. MODIFICACIÓN: Crear 3 usuarios administradores ---
+  const adminPassword = await hash('admin12345.', 12); // Usamos la misma contraseña para todos
+
+  await prisma.user.createMany({
+    data: [
+      {
+        name: 'Ignacio',
+        phone: '1234567891',
+        role: Role.ADMIN,
+        hashedPassword: adminPassword,
+      },
+      {
+        name: 'Bautista',
+        phone: '1234567892',
+        role: Role.ADMIN,
+        hashedPassword: adminPassword,
+      },
+      {
+        name: 'Nicolas',
+        phone: '1234567893',
+        role: Role.ADMIN,
+        hashedPassword: adminPassword,
+      },
+    ],
+  });
+  
+  // Mensajes de consola actualizados y claros
+  console.log("Usuarios administradores creados con éxito.");
+  console.log("-----------------------------------------------");
+  console.log("Credenciales de Acceso (Contraseña: admin123)");
+  console.log("- Ignacio: 1234567891");
+  console.log("- Bautista: 1234567892");
+  console.log("- Nicolas: 1234567893");
+  console.log("-----------------------------------------------");
+
+  console.log("Seed completado!");
 }
 
 main()

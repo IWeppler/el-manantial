@@ -1,30 +1,52 @@
-// app/dashboard/page.tsx
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import DashboardClient from "../../components/DashboardClient";
+import { authOptions } from "@/lib/auth";
+import { DashboardClient } from "@/components/DashboardClient";
 
 export default async function DashboardPage() {
-  // 1. Verificación de seguridad en el servidor
   const session = await getServerSession(authOptions);
 
-  // Si no hay sesión o el rol no es ADMIN, lo redirigimos a la página principal
   if (session?.user?.role !== "ADMIN") {
     redirect("/");
   }
 
-  // 2. Obtenemos todas las órdenes de la base de datos
-  const [orders, stock] = await Promise.all([
+  const [orders, stock, settings, production, expenses, schedules] = await Promise.all([
+    // MODIFICAR ESTA CONSULTA
     db.order.findMany({
-      orderBy: { orderDate: 'desc' },
-      include: { user: true, product: true },
+      orderBy: { orderDate: "desc" },
+      include: {
+        user: true,     
+        schedule: true, 
+      },
     }),
     db.stock.findFirst(),
+    db.settings.findFirst({
+      include: { priceTiers: true },
+    }),
+    db.eggProduction.findMany({ 
+      orderBy: { date: "desc" },
+      include: { user: { select: { name: true } } }
+    }),
+    db.expense.findMany({ 
+      orderBy: { date: "desc" },
+      include: { user: { select: { name: true } } }
+    }),
+    db.schedule.findMany({ where: { isActive: true }, orderBy: { dayOfWeek: 'asc' } }),
   ]);
 
-  // Si no hay stock, creamos uno por si acaso (no debería pasar con el seed)
-  const initialStockCount = stock?.mapleCount ?? 0;
+  if (!settings) {
+    throw new Error("La configuración del negocio no ha sido inicializada.");
+  }
 
-  return <DashboardClient initialOrders={orders} initialStock={initialStockCount} />;
+  return (
+    <DashboardClient
+      initialOrders={orders}
+      initialStock={stock}
+      initialSettings={settings}
+      initialProduction={production}
+      initialExpenses={expenses}
+      initialSchedules={schedules}
+    />
+  );
 }

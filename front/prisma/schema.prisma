@@ -3,53 +3,107 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
+// --- MODELOS DE USUARIO Y STOCK ---
 enum Role {
   USER
   ADMIN
 }
 
 model User {
-  id             String    @id @default(cuid())
+  id             String   @id @default(cuid())
   name           String
-  phone          String    @unique
+  phone          String   @unique
   address        String?
-  role           Role      @default(USER)   
+  role           Role     @default(USER)
   hashedPassword String
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  orders         Order[]
-}
-
-model Product {
-  id    String  @id @default(cuid())
-  name  String  
-  value String  @unique 
-  price Int     
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
   
-  orders Order[]
+  // Relaciones existentes y nuevas
+  orders         Order[]
+  eggProductions EggProduction[] 
+  expenses       Expense[]
 }
 
 model Stock {
-  id          String @id @default(cuid())
-  mapleCount  Int    @default(0)
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  mapleCount Int      @default(0)
+  updatedAt  DateTime @updatedAt
+}
+
+// --- MODELOS DE CONFIGURACIÓN DEL NEGOCIO ---
+model Settings {
+  id                    String      @id @default(cuid())
+  // --- Precios y Pedidos ---
+  pricePerMaple         Int
+  pricePerHalfDozen     Int?       
+  deliveryFee           Int         @default(0)
+  freeDeliveryThreshold Int?
+  minimumOrderMaples    Int         @default(1)
+  
+  priceTiers            PriceTier[]
+
+  // --- Información del Negocio ---
+  businessName          String?
+  whatsappNumber        String?
+  pickupAddress         String?
+}
+
+model PriceTier {
+  id          String   @id @default(cuid())
+  minQuantity Int      // Cantidad mínima de maples para aplicar el precio
+  price       Int      // Precio por maple en este nivel
+  
+  settings    Settings @relation(fields: [settingsId], references: [id])
+  settingsId  String
+}
+
+enum ScheduleType {
+  DELIVERY
+  PICKUP
+}
+
+model Schedule {
+  id        String       @id @default(cuid())
+  dayOfWeek String 
+  startTime String 
+  endTime   String
+  type      ScheduleType 
+  isActive  Boolean      @default(true) 
+  orders    Order[]
+}
+
+// --- MODELOS PARA MÉTRICAS DEL NEGOCIO ---
+model Expense {
+  id          String   @id @default(cuid())
+  date        DateTime @db.Date
+  description String
+  amount      Int
+  
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+}
+
+// Modelo para métricas de producción
+model EggProduction {
+  id       String   @id @default(cuid())
+  date     DateTime @db.Date
+  quantity Int
+  
+  user     User     @relation(fields: [userId], references: [id])
+  userId   String
 }
 
 
-enum DeliveryType {
-  RETIRO_EN_LOCAL
-  ENVIO_A_DOMICILIO
-}
-
+// --- MODELOS DE ÓRDENES ---
 enum PaymentMethod {
-  EFECTIVO
-  TRANSFERENCIA
+  CASH
+  TRANSFER
 }
 
 enum OrderStatus {
@@ -59,26 +113,18 @@ enum OrderStatus {
   CANCELADO
 }
 
-enum DeliveryTime {
-  T13_00
-  T20_00
-}
-
 model Order {
-  id                  String    @id @default(cuid())
-  productId           String
-  product             Product   @relation(fields: [productId], references: [id])
-  totalPrice          Int       
-  guestName           String?
-  guestPhone          String?
-  guestAddress        String?
-  user                User?     @relation(fields: [userId], references: [id])
-  userId              String?
-  deliveryType        DeliveryType
-  deliveryDay         String
-  deliveryTime        DeliveryTime
-  paymentMethod       PaymentMethod
-  status              OrderStatus @default(PENDIENTE)
-  orderDate           DateTime  @default(now())
-  isSubscriptionOrder Boolean   @default(false)
+  id            String        @id @default(cuid())
+  mapleQuantity Int 
+  totalPrice    Int
+  guestName     String?
+  guestPhone    String?
+  guestAddress  String?
+  user          User?         @relation(fields: [userId], references: [id])
+  userId        String?
+  schedule      Schedule      @relation(fields: [scheduleId], references: [id])
+  scheduleId    String
+  paymentMethod PaymentMethod
+  status        OrderStatus   @default(PENDIENTE)
+  orderDate     DateTime      @default(now())
 }

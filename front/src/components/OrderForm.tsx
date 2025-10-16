@@ -3,7 +3,6 @@
 import { Formik, Form, Field, useFormikContext } from "formik";
 import * as Yup from "yup";
 import { useState, useEffect } from "react";
-
 import { Select } from "./ui/Select";
 import { CustomInput } from "./ui/Input";
 import Modal from "@/components/ui/Modal";
@@ -16,7 +15,6 @@ import {
 } from "../lib/data-form";
 import Link from "next/link";
 
-// Estructura de los valores
 interface FormValues {
   name: string;
   phone: string;
@@ -28,7 +26,6 @@ interface FormValues {
   paymentMethod: string;
 }
 
-// Esquemas de validación con Yup
 const commonSchema = {
   product: Yup.string().required("Por favor, selecciona una cantidad"),
   deliveryType: Yup.string().required("Selecciona el tipo de entrega"),
@@ -56,7 +53,6 @@ const guestSchema = Yup.object({
 
 const userSchema = Yup.object({ ...commonSchema });
 
-// Componente hijo para el contenido del formulario
 const FormContent = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
   const { values, isValid, dirty } = useFormikContext<FormValues>();
   const [totalPrice, setTotalPrice] = useState(0);
@@ -184,13 +180,11 @@ const FormContent = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
   );
 };
 
-// Propiedades del componente principal
 interface OrderFormProps {
   isLoggedIn: boolean;
   userName?: string;
 }
 
-// Componente principal que maneja el estado
 const OrderForm = ({ isLoggedIn, userName }: OrderFormProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);

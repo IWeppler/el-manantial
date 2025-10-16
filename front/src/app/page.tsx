@@ -27,12 +27,12 @@ export default async function HomePage() {
             isLoggedIn={!!session}
             userName={session?.user?.name ?? "Cliente"}
           />
-          <p className="text-neutral-500 text-sm font-medium text-center mt-4">
+          <p className="text-neutral-500 text-sm font-medium text-center my-4">
             Desarrollado por{" "}
             <Link
               href="https://ignacioweppler.vercel.app/"
               target="_blank"
-              className="text-green-500"
+              className="text-primary hover:underline"
             >
               Ignacio Weppler
             </Link>
@@ -40,10 +40,9 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* Columna 2: Imagen fija (sin cambios) */}
+      {/* Columna 2: Imagen fija */}
       <div className="hidden md:block w-[40%] h-screen fixed top-0 right-0 z-10">
         <Image
-          // Aquí está la lógica condicional para la imagen
           src={session ? "/is-logged-eggs.png" : "/main.png"}
           alt="Gallinas felices en un campo verde"
           layout="fill"
