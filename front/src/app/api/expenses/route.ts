@@ -3,13 +3,14 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
+import { ExpenseCategory } from "@prisma/client"; // <-- Importa el nuevo enum
 
+// Actualizamos el schema de Zod
 const expenseSchema = z.object({
-  date: z.string().refine((date) => !isNaN(Date.parse(date)), {
-    message: "La fecha no es válida.",
-  }),
+  date: z.string().refine((date) => !isNaN(Date.parse(date)), { message: "La fecha no es válida." }),
   description: z.string().min(3, "La descripción es muy corta."),
   amount: z.number().positive("El monto debe ser un número positivo."),
+  category: z.nativeEnum(ExpenseCategory), // <-- Añadimos la validación de categoría
 });
 
 export async function POST(request: Request) {
@@ -26,14 +27,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ errors: validation.error.flatten().fieldErrors }, { status: 400 });
     }
 
-    const { date, description, amount } = validation.data;
+    const { date, description, amount, category } = validation.data;
 
     const newExpense = await db.expense.create({
       data: {
         date: new Date(date),
         description,
         amount,
-        userId: session.user.id, 
+        category, 
+        userId: session.user.id,
       },
       include: {
         user: { select: { name: true } }

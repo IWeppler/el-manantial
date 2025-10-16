@@ -1,6 +1,7 @@
 "use client";
 import { OrderWithDetails } from "@/hooks/useDashboard";
-import { EggProduction, Expense } from "@prisma/client";
+import { EggProduction, Expense, ExpenseCategory } from "@prisma/client";
+import { categoryOptions } from "@/lib/constants";
 import { useMemo } from "react";
 import { FaEgg, FaArrowUp, FaArrowDown, FaBalanceScale, FaUserCircle } from "react-icons/fa";
 import { Formik, Form, FormikHelpers } from "formik";
@@ -9,11 +10,20 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import { CustomInput } from "../ui/Input";
 import clsx from "clsx";
-
+import { Select } from "../ui/Select";
 
 type ProductionWithUser = EggProduction & { user?: { name: string | null } };
 type ExpenseWithUser = Expense & { user?: { name: string | null } };
 type HistoryItem = ProductionWithUser | ExpenseWithUser;
+
+
+interface ExpenseFormValues {
+  date: string;
+  description: string;
+  amount: string | number;
+  category: ExpenseCategory | ""; // <-- Añadimos el campo
+}
+
 
 
 // (Puedes mover este componente StatsCard a un archivo compartido si lo usas en varios lugares)
@@ -83,6 +93,7 @@ interface ExpenseFormValues {
   amount: string | number;
 }
 
+
 // Esquemas de validación con Yup
 const productionValidation = Yup.object({
   date: Yup.date().required("La fecha es requerida."),
@@ -93,6 +104,7 @@ const expenseValidation = Yup.object({
   date: Yup.date().required("La fecha es requerida."),
   description: Yup.string().min(3, "Mínimo 3 caracteres.").required("La descripción es requerida."),
   amount: Yup.number().positive("Debe ser mayor a 0.").required("El monto es requerido."),
+  category: Yup.string().oneOf(Object.values(ExpenseCategory)).required("La categoría es requerida."), // <-- Añadimos la validación
 });
 
 export function AnalyticsPanel({ orders, production, expenses, setProduction, setExpenses }: AnalyticsPanelProps) { 
@@ -193,15 +205,25 @@ export function AnalyticsPanel({ orders, production, expenses, setProduction, se
         <div className="bg-white p-4 rounded-lg shadow">
           <h3 className="font-bold text-lg mb-4">Registrar Gasto</h3>
           <Formik<ExpenseFormValues> 
-            initialValues={{ date: new Date().toISOString().split('T')[0], description: '', amount: '' }}
+            initialValues={{ date: new Date().toISOString().split('T')[0], description: '', amount: '', category: '' }}
             validationSchema={expenseValidation}
             onSubmit={handleAddExpense}
           >
             {({ isSubmitting }) => (
               <Form className="space-y-4">
                 <CustomInput label="Fecha" name="date" type="date" />
-                <CustomInput label="Descripción del Gasto" name="description" type="text" placeholder="Ej: Alimento para gallinas" />
+                
+                {/* NUEVO: Select para Categoría */}
+                <Select label="Categoría del Gasto" name="category">
+                  <option value="">Selecciona una categoría...</option>
+                  {categoryOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </Select>
+
+                <CustomInput label="Descripción del Gasto" name="description" type="text" placeholder="Ej: Bolsa de maíz 50kg" />
                 <CustomInput label="Monto ($)" name="amount" type="number" placeholder="Ej: 25000" />
+                
                 <button type="submit" disabled={isSubmitting} className="w-full rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-neutral-800 disabled:opacity-50">
                   {isSubmitting ? "Registrando..." : "Registrar Gasto"}
                 </button>
