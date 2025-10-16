@@ -42,7 +42,6 @@ export default function OrderSuccessModal({
   deliveryType,
 }: OrderSuccessModalProps) {
   const router = useRouter();
-  const priceInPesos = totalPrice ? totalPrice / 100 : 0;
 
   // Estados para el feedback de copiado
   const [copied, setCopied] = useState<"cbu" | "alias" | null>(null);

@@ -47,7 +47,7 @@ export function StockManager({ stock, onUpdateStock }: StockManagerProps) {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           disabled={isLoading}
-          className="w-full border-gray-300 rounded-md shadow-sm p-2 text-center text-lg focus:ring-orange-500 focus:border-orange-500"
+          className="w-full bg-white border border-gray-300 rounded-md p-2 text-center text-lg focus:ring-orange-500 focus:border-orange-500"
           placeholder="Cantidad"
         />
         <div className="grid grid-cols-2 gap-2">

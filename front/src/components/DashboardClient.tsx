@@ -9,7 +9,7 @@ import {
   Expense,
   Schedule,
 } from "@prisma/client";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { useDashboardLogic, OrderWithDetails } from "@/hooks/useDashboard";
@@ -21,6 +21,9 @@ import { AnalyticsPanel } from "./dashboard/AnalyticsPanel";
 import { SettingsPanel } from "./dashboard/SettingsPanel";
 import { AdminOrderForm } from "./dashboard/AdminOrderForm";
 import { ReportsPanel } from "./dashboard/ReportsPanel";
+import Image from "next/image";
+import { Button } from "./ui/button";
+import { UserNav } from "./dashboard/UserNav";
 
 // Definimos un tipo robusto para las props, incluyendo los priceTiers
 type SettingsWithTiers = Settings & {
@@ -50,6 +53,7 @@ export function DashboardClient({
   const [production, setProduction] = useState(initialProduction);
   const [expenses, setExpenses] = useState(initialExpenses);
   const [isCreateOrderModalOpen, setCreateOrderModalOpen] = useState(false);
+  const { data: session, status } = useSession();
 
   // --- LÓGICA DE ÓRDENES ---
   const {
@@ -75,10 +79,15 @@ export function DashboardClient({
     }
   };
 
-  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
+  const handleStatusChange = async (
+    orderId: string,
+    newStatus: OrderStatus
+  ) => {
     // Actualización optimista para una UI instantánea
     const previousOrders = orders;
-    setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
+    );
 
     try {
       await axios.patch(`/api/orders/${orderId}`, { status: newStatus });
@@ -93,22 +102,32 @@ export function DashboardClient({
   const handleOrderCreated = (newOrder: OrderWithDetails) => {
     setOrders((prevOrders) => [newOrder, ...prevOrders]);
     // Opcional: Actualiza el stock visualmente también
-    setStock(prev => prev ? { ...prev, mapleCount: prev.mapleCount - newOrder.mapleQuantity } : null);
+    setStock((prev) =>
+      prev
+        ? { ...prev, mapleCount: prev.mapleCount - newOrder.mapleQuantity }
+        : null
+    );
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">
-            Panel de Administración
-          </h1>
-          <button
-            onClick={() => signOut({ callbackUrl: "/" })}
-            className="rounded-full bg-neutral-950 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-neutral-800"
-          >
-            Cerrar Sesión
-          </button>
+          <div className="flex items-center gap-4">
+             <Image
+                src="/logo.jpg"
+                alt="Logo del nuevo manantial"
+                height={40}
+                width={40}
+                className="rounded-full object-cover"
+              />
+              <h1 className="hidden sm:block text-xl font-bold text-gray-900">
+                Panel de Administración
+              </h1>
+          </div>
+          
+          {session?.user && <UserNav user={session.user} />}
+          
         </div>
       </header>
 
@@ -158,7 +177,7 @@ export function DashboardClient({
         )}
 
         {activeTab === "reportes" && (
-          <ReportsPanel 
+          <ReportsPanel
             orders={orders}
             production={production}
             expenses={expenses}
@@ -166,7 +185,10 @@ export function DashboardClient({
         )}
 
         {activeTab === "configuracion" && (
-          <SettingsPanel initialSettings={initialSettings} initialSchedules={initialSchedules} />
+          <SettingsPanel
+            initialSettings={initialSettings}
+            initialSchedules={initialSchedules}
+          />
         )}
       </main>
 

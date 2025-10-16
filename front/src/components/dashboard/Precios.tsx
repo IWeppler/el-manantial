@@ -1,6 +1,6 @@
 "use client";
 
-import { OrderStatus, PaymentMethod } from "@prisma/client";
+import { OrderStatus, PaymentMethod, ScheduleType } from "@prisma/client";
 import {
   FaWhatsapp,
   FaMoneyBillWave,
@@ -9,6 +9,7 @@ import {
 } from "react-icons/fa";
 import { OrderWithDetails } from "@/hooks/useDashboard";
 import React from "react";
+import { ShoppingBag, Truck } from "lucide-react";
 
 // --- Tipos de Props ---
 interface OrdersListProps {
@@ -45,6 +46,26 @@ const formatPrice = (price: number) =>
     minimumFractionDigits: 0,
   });
 
+
+  const DeliveryTypeBadge = ({ type }: { type: ScheduleType }) => {
+  const isDelivery = type === ScheduleType.DELIVERY;
+
+  const config = {
+    label: isDelivery ? "Envío" : "Retiro",
+    icon: isDelivery ? <Truck size={14} /> : <ShoppingBag size={14} />,
+    className: isDelivery
+      ? "bg-orange-100 text-orange-800"
+      : "bg-green-100 text-green-800",
+  };
+
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${config.className}`}>
+      {config.icon}
+      {config.label}
+    </span>
+  );
+};
+
 // --- AHORA: Sub-componente para la Fila de la Tabla ---
 const OrderItemRow = ({
   order,
@@ -55,8 +76,10 @@ const OrderItemRow = ({
   index: number;
   onStatusChange: OrdersListProps["onStatusChange"];
 }) => (
-  <tr className={index % 2 === 0 ? "bg-white" : "bg-neutral-200"}>
+  <tr className={index % 2 === 0 ? "bg-white" : "bg-neutral-100"}>
     <td className="px-4 py-4 text-sm font-medium text-gray-500">{index + 1}</td>
+
+
     <td className="px-6 py-4">
       <div className="flex items-center text-sm font-medium text-gray-900">
         {order.user?.name || order.guestName}
@@ -66,6 +89,7 @@ const OrderItemRow = ({
         {order.user?.address || order.guestAddress || "No especificada"}
       </div>
     </td>
+
     <td className="px-6 py-4">
       {/* Usamos mapleQuantity en lugar de product.name */}
       <div className="text-sm text-gray-900">
@@ -75,9 +99,12 @@ const OrderItemRow = ({
         {formatPrice(order.totalPrice)}
       </div>
       {/* Mostramos el horario del pedido */}
-      <div className="text-xs text-gray-500">
+      <div className="text-sm text-gray-500">
         {order.schedule.dayOfWeek} ({order.schedule.startTime} -{" "}
         {order.schedule.endTime})
+      </div>
+      <div className="mt-2">
+        <DeliveryTypeBadge type={order.schedule.type} />
       </div>
     </td>
     <td className="px-6 py-4">
@@ -128,11 +155,11 @@ const OrderItemCard = ({
           {order.user?.name || order.guestName}
           {order.user && <VerifiedBadge />}
         </div>
-        <p className="text-xs text-gray-500">
+        <p className="text-sm text-gray-500">
           {order.user?.address || order.guestAddress || "No especificada"}
         </p>
       </div>
-      <p className="text-xs text-gray-500">
+      <p className="text-sm text-gray-500">
         {new Date(order.orderDate).toLocaleDateString("es-AR")}
       </p>
     </div>
@@ -145,11 +172,14 @@ const OrderItemCard = ({
         {formatPrice(order.totalPrice)}
       </p>
       {/* MEJORA: Mostramos el horario del pedido */}
-      <p className="text-xs text-gray-500">
+      <p className="text-sm text-gray-500">
         {order.schedule.dayOfWeek} ({order.schedule.startTime} -{" "}
         {order.schedule.endTime})
       </p>
     </div>
+    <div className="mt-2">
+        <DeliveryTypeBadge type={order.schedule.type} />
+      </div>
     <div className="mt-4 flex justify-between items-center border-t pt-4">
       <div className="flex items-center gap-4">
         <a
@@ -167,7 +197,7 @@ const OrderItemCard = ({
         onChange={(e) =>
           onStatusChange(order.id, e.target.value as OrderStatus)
         }
-        className={`rounded-md border shadow-sm text-xs font-semibold ${
+        className={`rounded-md border shadow-sm text-sm font-semibold ${
           statusColors[order.status]
         }`}
       >
@@ -203,19 +233,19 @@ export function OrdersList({
           <table className="min-w-full">
             <thead className="bg-neutral-800 text-white">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-sm font-medium uppercase tracking-wider">
                   #
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-medium uppercase tracking-wider">
                   Cliente / Dirección
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-medium uppercase tracking-wider">
                   Pedido
                 </th>
-                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-sm font-medium uppercase tracking-wider">
                   Contacto / Pago
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-medium uppercase tracking-wider">
                   Estado
                 </th>
               </tr>
