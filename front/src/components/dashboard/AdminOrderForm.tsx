@@ -6,7 +6,6 @@ import { toast } from "react-hot-toast";
 import { Settings, Schedule, PaymentMethod, ScheduleType } from "@prisma/client";
 import { OrderWithDetails } from "@/hooks/useDashboard";
 import { useEffect, useState, useMemo } from "react";
-
 import { CustomInput } from "@/components/ui/CustomInput";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import Modal from "@/components/ui/Modal";
@@ -93,8 +92,7 @@ const PriceCalculator = ({ settings, schedules }: { settings: SettingsWithTiers;
   );
 };
 
-
-const OrderFormFields = ({ schedules, settings }: { schedules: Schedule[]; settings: SettingsWithTiers; }) => {
+const OrderFormFields = ({ schedules, settings, onClose }: { schedules: Schedule[]; settings: SettingsWithTiers; onClose: () => void; }) => {
     const { values, setFieldValue, isSubmitting } = useFormikContext<AdminOrderFormValues>();
 
     const availableDays = useMemo(() => {
@@ -145,7 +143,7 @@ const OrderFormFields = ({ schedules, settings }: { schedules: Schedule[]; setti
             <PriceCalculator settings={settings} schedules={schedules} />
             
             <div className="flex justify-end gap-4 pt-4">
-                <Button type="button" variant="ghost" onClick={() => { /* onClose no está disponible aquí directamente, se maneja en el padre */ }}>Cancelar</Button>
+                <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
                 <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? "Creando..." : "Crear Pedido"}
                 </Button>
@@ -154,40 +152,42 @@ const OrderFormFields = ({ schedules, settings }: { schedules: Schedule[]; setti
     );
 };
 
-// --- COMPONENTE PRINCIPAL (AHORA MUCHO MÁS LIMPIO) ---
+// --- COMPONENTE PRINCIPAL ---
 export function AdminOrderForm({ isOpen, onClose, settings, schedules, onOrderCreated }: AdminOrderFormProps) {
   
   const validationSchema = Yup.object({
     guestName: Yup.string().required("Nombre requerido"),
     guestPhone: Yup.string().required("Teléfono requerido"),
-    mapleQuantity: Yup.number()
-      .positive("Debe ser mayor a 0")
-      .required("Cantidad requerida"),
-    deliveryType: Yup.string()
-      .oneOf(Object.values(ScheduleType))
-      .required("Selecciona un tipo"),
+    mapleQuantity: Yup.number().positive("Debe ser mayor a 0").required("Cantidad requerida"),
+    deliveryType: Yup.string().oneOf(Object.values(ScheduleType)).required("Selecciona un tipo"),
     dayOfWeek: Yup.string().required("Selecciona un día"),
     scheduleId: Yup.string().required("Selecciona una hora"),
-    paymentMethod: Yup.string()
-      .oneOf(Object.values(PaymentMethod))
-      .required("Método de pago requerido"),
-    guestAddress: Yup.string().when("deliveryType", {
-      is: "DELIVERY",
-      then: (schema) =>
-        schema.required("La dirección es obligatoria para envíos"),
-    }),
+    paymentMethod: Yup.string().oneOf(Object.values(PaymentMethod)).required("Método de pago requerido"),
+    guestAddress: Yup.string().when("deliveryType", { is: 'DELIVERY', then: (schema) => schema.required("La dirección es obligatoria para envíos") }),
   });
-  const handleSubmit = async (values: AdminOrderFormValues, { setSubmitting, resetForm }: FormikHelpers<AdminOrderFormValues>) => { /* ... (sin cambios) ... */ };
+
+  const handleSubmit = async (values: AdminOrderFormValues, { setSubmitting, resetForm }: FormikHelpers<AdminOrderFormValues>) => {
+    try {
+      const dataToSend = { ...values, mapleQuantity: Number(values.mapleQuantity) };
+      const response = await axios.post("/api/orders", dataToSend);
+      toast.success("Pedido creado con éxito.");
+      onOrderCreated(response.data);
+      resetForm();
+      onClose();
+    } catch (error) {
+      if (isAxiosError(error) && error.response) {
+        toast.error(error.response.data?.message || "No se pudo crear el pedido.");
+      } else {
+        toast.error("Ocurrió un error inesperado.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const initialValues: AdminOrderFormValues = {
-    guestName: "",
-    guestPhone: "",
-    guestAddress: "",
-    mapleQuantity: "",
-    deliveryType: "",
-    dayOfWeek: "",
-    scheduleId: "",
-    paymentMethod: "",
-    totalPrice: 0,
+    guestName: "", guestPhone: "", guestAddress: "", mapleQuantity: "",
+    deliveryType: "", dayOfWeek: "", scheduleId: "", paymentMethod: "", totalPrice: 0,
   };
 
   return (
@@ -197,7 +197,7 @@ export function AdminOrderForm({ isOpen, onClose, settings, schedules, onOrderCr
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
       >
-        <OrderFormFields settings={settings} schedules={schedules} />
+        <OrderFormFields settings={settings} schedules={schedules} onClose={onClose} />
       </Formik>
     </Modal>
   );

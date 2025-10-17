@@ -88,7 +88,7 @@ const HistoryTable = ({
               className={clsx("border-t", index % 2 === 1 && "bg-gray-50")}
             >
               <td className="p-3 text-gray-700">
-                {new Date(item.date).toLocaleDateString("es-AR")}
+                {new Date(item.date).toLocaleDateString("es-AR", { timeZone: "UTC" })}
               </td>
               <td className="p-3 text-gray-700">
                 {"quantity" in item ? item.quantity : item.description}
