@@ -20,9 +20,7 @@ export default async function HomePage() {
   return (
     <main className="flex flex-col md:flex-row">
       <div
-        className="w-full md:w-[60%] min-h-screen 
-      bg-gradient-to-br from-amber-300 via-orange-300 to-red-400 
-      md:bg-none md:bg-white 
+        className="w-full md:w-[60%] min-h-screen bg-white 
       flex justify-center items-start p-4 pt-12 md:p-12 overflow-y-auto scrollbar-hide"
       >
         <div className="relative w-full max-w-lg">
@@ -43,12 +41,12 @@ export default async function HomePage() {
             settings={settings}
             schedules={schedules}
           />
-          <p className="text-neutral-500 text-sm font-medium text-center my-4">
+          <p className="text-gray-600 bottom-0 text-center mt-8">
             Desarrollado por{" "}
             <Link
-              href="https://ignacioweppler.com/"
+              href="https://ignacioweppler.com"
               target="_blank"
-              className="text-orange-500 hover:underline"
+              className="text-[#c4171d] font-medium hover:underline"
             >
               Ignacio Weppler
             </Link>
