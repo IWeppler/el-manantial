@@ -12,7 +12,6 @@ export default async function DashboardPage() {
   }
 
   const [orders, stock, settings, production, expenses, schedules] = await Promise.all([
-    // MODIFICAR ESTA CONSULTA
     db.order.findMany({
       orderBy: { orderDate: "desc" },
       include: {

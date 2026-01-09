@@ -65,7 +65,6 @@ export default function OrderSuccessModal({
     router.push("/register");
   };
 
-  const isTransfer = paymentMethod === PaymentMethod.TRANSFER;
   const isCash = paymentMethod === PaymentMethod.CASH;
   const isPickup = deliveryType === ScheduleType.PICKUP;
 

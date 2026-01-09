@@ -2,9 +2,9 @@
 
 import { Fragment } from "react";
 import { Menu, Transition } from "@headlessui/react";
-import { ChevronDown, LogOut } from "lucide-react";
+import { ChevronDown, LogOut, User as UserIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
-import { Session } from "next-auth"; 
+import { Session } from "next-auth";
 
 interface UserNavProps {
   user: Session["user"];
@@ -16,9 +16,15 @@ export function UserNav({ user }: UserNavProps) {
   return (
     <Menu as="div" className="relative inline-block text-left">
       <div>
-        <Menu.Button className="inline-flex w-full justify-center items-center gap-x-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50">
-          {user.name}
-          <ChevronDown className="-mr-1 h-5 w-5 text-gray-400" aria-hidden="true" />
+        <Menu.Button className="inline-flex w-full justify-center items-center gap-x-3 rounded-full bg-zinc-800 border border-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 transition-colors">
+          <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+            <UserIcon size={14} />
+          </div>
+          <span className="hidden sm:inline">{user.name}</span>
+          <ChevronDown
+            className="-mr-1 h-4 w-4 text-zinc-400"
+            aria-hidden="true"
+          />
         </Menu.Button>
       </div>
 
@@ -31,17 +37,20 @@ export function UserNav({ user }: UserNavProps) {
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white">
+        <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right divide-y divide-white/5 rounded-xl bg-[#18181b] border border-white/10 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
           <div className="py-1">
             <Menu.Item>
               {({ active }) => (
                 <button
                   onClick={() => signOut({ callbackUrl: "/" })}
                   className={`${
-                    active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
-                  } group flex w-full items-center px-4 py-2 text-sm`}
+                    active ? "bg-white/5 text-white" : "text-zinc-400"
+                  } group flex w-full items-center px-4 py-2 text-sm transition-colors`}
                 >
-                  <LogOut className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" aria-hidden="true" />
+                  <LogOut
+                    className="mr-3 h-4 w-4 text-zinc-500 group-hover:text-zinc-300"
+                    aria-hidden="true"
+                  />
                   Cerrar Sesión
                 </button>
               )}

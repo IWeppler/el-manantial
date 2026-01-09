@@ -9,30 +9,31 @@ interface DashboardTabsProps {
 
 const tabs = [
   { id: "pedidos", name: "Pedidos" },
-  { id: "analisis", name: "Análisis y Producción" },
+  { id: "analisis", name: "Análisis" },
   { id: "reportes", name: "Reportes" },
   { id: "configuracion", name: "Configuración" },
 ];
 
 export function DashboardTabs({ activeTab, setActiveTab }: DashboardTabsProps) {
   return (
-    <div className="border-b border-gray-200 mb-6 px-4 sm:px-0">
-      <nav className="-mb-px flex space-x-6 sm:space-x-8 overflow-x-auto" aria-label="Tabs">
-        {tabs.map((tab) => (
+    <nav className="flex items-center gap-1 bg-zinc-900/50 p-1 rounded-lg border border-white/5 mx-4 overflow-x-auto scrollbar-hide">
+      {tabs.map((tab) => {
+        const isActive = activeTab === tab.id;
+        return (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={clsx(
-              "whitespace-nowrap py-4 px-2 border-b-2 font-medium text-sm focus:outline-none",
-              activeTab === tab.id
-                ? "border-neutral-800 text-neutral-900"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              "px-4 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap",
+              isActive
+                ? "bg-zinc-800 text-white shadow-sm border border-white/5" // Estado Activo (Botón)
+                : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5" // Estado Inactivo (Texto)
             )}
           >
             {tab.name}
           </button>
-        ))}
-      </nav>
-    </div>
+        );
+      })}
+    </nav>
   );
 }

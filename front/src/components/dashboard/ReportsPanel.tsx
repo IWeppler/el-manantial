@@ -126,8 +126,8 @@ const ChartCard = ({
   title: string;
   children: React.ReactNode;
 }) => (
-  <div className="bg-white p-6 rounded-xl shadow">
-    <h3 className="font-bold text-lg mb-4 text-gray-800">{title}</h3>
+  <div className="bg-[#18181b] p-6 rounded-xl shadow">
+    <h3 className="font-bold text-lg mb-4 text-white">{title}</h3>
     <div className="h-72 w-full">{children}</div>
   </div>
 );
