@@ -4,7 +4,7 @@ import { Order, User, Schedule } from "@prisma/client";
 // Paso 1: Definir tipos correctos que usaremos en todo el dashboard
 export type OrderWithDetails = Order & {
   user: User | null;
-  schedule: Schedule;
+  schedule: Schedule | null;
 };
 
 // Paso 2: Definir la forma del estado de los filtros
@@ -21,7 +21,9 @@ interface UseDashboardLogicProps {
   initialOrders: OrderWithDetails[];
 }
 
-export const useDashboardLogic = ({ initialOrders }: UseDashboardLogicProps) => {
+export const useDashboardLogic = ({
+  initialOrders,
+}: UseDashboardLogicProps) => {
   const [orders, setOrders] = useState<OrderWithDetails[]>(initialOrders);
 
   const [filters, setFilters] = useState<FiltersState>({
@@ -48,34 +50,61 @@ export const useDashboardLogic = ({ initialOrders }: UseDashboardLogicProps) => 
 
     return orders.filter((order) => {
       // Condición de Tipo de Horario
-      const scheduleMatch = filters.scheduleType === "ALL" || order.schedule.type === filters.scheduleType;
+      const scheduleMatch =
+        filters.scheduleType === "ALL" ||
+        order.schedule?.type === filters.scheduleType;
 
       // Condición de Estado
-      const statusMatch = filters.status === "ALL" || order.status === filters.status;
+      const statusMatch =
+        filters.status === "ALL" || order.status === filters.status;
 
       // Condición de Método de Pago
-      const paymentMethodMatch = filters.paymentMethod === "ALL" || order.paymentMethod === filters.paymentMethod;
-      
+      const paymentMethodMatch =
+        filters.paymentMethod === "ALL" ||
+        order.paymentMethod === filters.paymentMethod;
+
       // Condición de Rango de Fechas (Optimizada)
       const dateMatch = !startDate || new Date(order.orderDate) >= startDate;
 
       // Condición de Búsqueda
-      const customerName = (order.user?.name || order.guestName || "").toLowerCase();
-      const customerPhone = (order.user?.phone || order.guestPhone || "").toLowerCase();
-      const searchMatch = !searchTerm || customerName.includes(searchTerm) || customerPhone.includes(searchTerm);
+      const customerName = (
+        order.user?.name ||
+        order.guestName ||
+        ""
+      ).toLowerCase();
+      const customerPhone = (
+        order.user?.phone ||
+        order.guestPhone ||
+        ""
+      ).toLowerCase();
+      const searchMatch =
+        !searchTerm ||
+        customerName.includes(searchTerm) ||
+        customerPhone.includes(searchTerm);
 
-      return scheduleMatch && statusMatch && paymentMethodMatch && dateMatch && searchMatch;
+      return (
+        scheduleMatch &&
+        statusMatch &&
+        paymentMethodMatch &&
+        dateMatch &&
+        searchMatch
+      );
     });
   }, [orders, filters]);
 
   const stats = useMemo(() => {
-    const relevantOrders = filteredOrders.filter((o) => o.status !== "CANCELADO");
-    const totalSales = relevantOrders.reduce((sum, order) => sum + order.totalPrice, 0);
+    const relevantOrders = filteredOrders.filter(
+      (o) => o.status !== "CANCELADO"
+    );
+    const totalSales = relevantOrders.reduce(
+      (sum, order) => sum + order.totalPrice,
+      0
+    );
     const totalOrders = relevantOrders.length;
     const uniqueCustomers = new Set(
       relevantOrders.map((o) => o.user?.phone || o.guestPhone)
     ).size;
-    
+
     return {
       totalSales,
       totalOrders,

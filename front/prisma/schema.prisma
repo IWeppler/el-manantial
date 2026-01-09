@@ -133,8 +133,8 @@ model Order {
   guestAddress  String?
   user          User?         @relation(fields: [userId], references: [id])
   userId        String?
-  schedule      Schedule      @relation(fields: [scheduleId], references: [id])
-  scheduleId    String
+  schedule      Schedule?     @relation(fields: [scheduleId], references: [id])
+  scheduleId    String?
   paymentMethod PaymentMethod
   status        OrderStatus   @default(PENDIENTE)
   orderDate     DateTime      @default(now())

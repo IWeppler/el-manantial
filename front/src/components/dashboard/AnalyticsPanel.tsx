@@ -5,7 +5,6 @@ import { Formik, Form, FormikHelpers, Field } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import clsx from "clsx";
 import {
   Egg,
   ArrowUp,
@@ -13,11 +12,10 @@ import {
   Scale,
   DollarSign,
   Calendar,
-  Layers,
   FileText,
   User,
   Plus,
-} from "lucide-react"; // Usamos Lucide para consistencia con el resto del dashboard
+} from "lucide-react";
 
 import { OrderWithDetails } from "@/hooks/useDashboard";
 import { EggProduction, Expense, ExpenseCategory } from "@prisma/client";

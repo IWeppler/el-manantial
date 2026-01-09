@@ -9,7 +9,7 @@ import {
 } from "react-icons/fa";
 import { OrderWithDetails } from "@/hooks/useDashboard";
 import React from "react";
-import { ShoppingBag, Truck } from "lucide-react";
+import { ShoppingBag, Truck, Store } from "lucide-react";
 
 // --- Tipos de Props ---
 interface OrdersListProps {
@@ -46,20 +46,31 @@ const formatPrice = (price: number) =>
     minimumFractionDigits: 0,
   });
 
-
-  const DeliveryTypeBadge = ({ type }: { type: ScheduleType }) => {
-  const isDelivery = type === ScheduleType.DELIVERY;
-
-  const config = {
-    label: isDelivery ? "Envío" : "Retiro",
-    icon: isDelivery ? <Truck size={14} /> : <ShoppingBag size={14} />,
-    className: isDelivery
-      ? "bg-orange-100 text-orange-800"
-      : "bg-green-100 text-green-800",
+const DeliveryTypeBadge = ({ type }: { type?: ScheduleType | null }) => {
+  let config = {
+    label: "Mostrador",
+    icon: <Store size={14} />,
+    className: "bg-purple-100 text-purple-800",
   };
 
+  if (type === "DELIVERY") {
+    config = {
+      label: "Envío",
+      icon: <Truck size={14} />,
+      className: "bg-orange-100 text-orange-800",
+    };
+  } else if (type === "PICKUP") {
+    config = {
+      label: "Retiro",
+      icon: <ShoppingBag size={14} />,
+      className: "bg-green-100 text-green-800",
+    };
+  }
+
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${config.className}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${config.className}`}
+    >
       {config.icon}
       {config.label}
     </span>
@@ -78,7 +89,6 @@ const OrderItemRow = ({
 }) => (
   <tr className={index % 2 === 0 ? "bg-white" : "bg-neutral-100"}>
     <td className="px-4 py-4 text-sm font-medium text-gray-500">{index + 1}</td>
-
 
     <td className="px-6 py-4">
       <div className="flex items-center text-sm font-medium text-gray-900">
@@ -100,11 +110,11 @@ const OrderItemRow = ({
       </div>
       {/* Mostramos el horario del pedido */}
       <div className="text-sm text-gray-500">
-        {order.schedule.dayOfWeek} ({order.schedule.startTime} -{" "}
-        {order.schedule.endTime})
+        {order.schedule?.dayOfWeek} ({order.schedule?.startTime} -{" "}
+        {order.schedule?.endTime})
       </div>
       <div className="mt-2">
-        <DeliveryTypeBadge type={order.schedule.type} />
+        <DeliveryTypeBadge type={order.schedule?.type} />
       </div>
     </td>
     <td className="px-6 py-4">
@@ -173,13 +183,13 @@ const OrderItemCard = ({
       </p>
       {/* MEJORA: Mostramos el horario del pedido */}
       <p className="text-sm text-gray-500">
-        {order.schedule.dayOfWeek} ({order.schedule.startTime} -{" "}
-        {order.schedule.endTime})
+        {order.schedule?.dayOfWeek} ({order.schedule?.startTime} -{" "}
+        {order.schedule?.endTime})
       </p>
     </div>
     <div className="mt-2">
-        <DeliveryTypeBadge type={order.schedule.type} />
-      </div>
+      <DeliveryTypeBadge type={order.schedule?.type} />
+    </div>
     <div className="mt-4 flex justify-between items-center border-t pt-4">
       <div className="flex items-center gap-4">
         <a

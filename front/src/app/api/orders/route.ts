@@ -3,24 +3,21 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
-import { PaymentMethod, ScheduleType } from "@prisma/client";
+import { PaymentMethod, ScheduleType, Prisma } from "@prisma/client";
 
-// 1. Definir un esquema para validación robusta de entrada
 const createOrderSchema = z.object({
   mapleQuantity: z
     .number()
     .int()
     .positive("La cantidad debe ser un número positivo."),
-  scheduleId: z.string().cuid("El ID del horario no es válido."),
+  scheduleId: z.string().cuid("El ID del horario no es válido.").optional(),
   paymentMethod: z
     .nativeEnum(PaymentMethod)
     .refine((val) => Object.values(PaymentMethod).includes(val), {
       message: "Método de pago no válido.",
     }),
-  guestName: z.string().min(2, "El nombre es obligatorio."),
-  guestPhone: z
-    .string()
-    .regex(/^(\+?549?)?\d{10,13}$/, "Número de WhatsApp no válido."),
+  guestName: z.string().optional(),
+  guestPhone: z.string().optional(),
   guestAddress: z.string().optional(),
 });
 
@@ -46,13 +43,25 @@ export async function POST(request: Request) {
       guestAddress,
     } = validation.data;
 
-    // Validación explícita de datos de invitado
-    const isGuestOrder = !session?.user || session.user.role === "ADMIN";
-    if (isGuestOrder && (!guestName || !guestPhone)) {
+    const isAdmin = session?.user?.role === "ADMIN";
+
+    // --- VALIDACIONES DE REGLAS DE NEGOCIO ---
+
+    if (!scheduleId && !isAdmin) {
       return NextResponse.json(
         {
-          message: "El nombre y el teléfono son obligatorios para este pedido.",
+          message:
+            "Es obligatorio seleccionar un horario para realizar el pedido.",
         },
+        { status: 400 }
+      );
+    }
+
+    const isGuestOrder = !session?.user || isAdmin;
+
+    if (isGuestOrder && (!guestName || !guestPhone)) {
+      return NextResponse.json(
+        { message: "El nombre y el teléfono son obligatorios." },
         { status: 400 }
       );
     }
@@ -64,30 +73,29 @@ export async function POST(request: Request) {
       const stock = await tx.stock.findFirst();
 
       if (!settings || !stock) {
-        throw new Error(
-          "La configuración del negocio o el stock no han sido inicializados."
-        );
+        throw new Error("Configuración o stock no inicializados.");
       }
-      if (mapleQuantity < settings.minimumOrderMaples) {
+
+      if (!isAdmin && mapleQuantity < settings.minimumOrderMaples) {
         throw new Error(
           `El pedido mínimo es de ${settings.minimumOrderMaples} maple(s).`
         );
       }
+
       if (stock.mapleCount < mapleQuantity) {
-        throw new Error("No hay suficiente stock para completar el pedido.");
+        throw new Error("No hay suficiente stock.");
       }
 
-      const schedule = await tx.schedule.findUnique({
-        where: { id: scheduleId },
-      });
-
-      if (!schedule || !schedule.isActive) {
-        throw new Error(
-          "El horario seleccionado no es válido o no está activo."
-        );
+      // --- MANEJO DEL HORARIO (SCHEDULE) ---
+      let schedule = null;
+      if (scheduleId) {
+        schedule = await tx.schedule.findUnique({ where: { id: scheduleId } });
+        if (!schedule || !schedule.isActive) {
+          throw new Error("El horario seleccionado no es válido.");
+        }
       }
 
-      // --- CÁLCULO DE PRECIO SEGURO EN EL SERVIDOR ---
+      // --- CÁLCULO DE PRECIO ---
       let pricePerMaple = settings.pricePerMaple;
       const sortedTiers = [...settings.priceTiers].sort(
         (a, b) => b.minQuantity - a.minQuantity
@@ -95,19 +103,21 @@ export async function POST(request: Request) {
       const applicableTier = sortedTiers.find(
         (tier) => mapleQuantity >= tier.minQuantity
       );
-      if (applicableTier) {
-        pricePerMaple = applicableTier.price;
-      }
+      if (applicableTier) pricePerMaple = applicableTier.price;
+
       const subtotal = mapleQuantity * pricePerMaple;
 
       let deliveryFee = 0;
+
       if (
+        schedule &&
         schedule.type === ScheduleType.DELIVERY &&
         (!settings.freeDeliveryThreshold ||
           subtotal < settings.freeDeliveryThreshold)
       ) {
         deliveryFee = settings.deliveryFee;
       }
+
       const totalPrice = subtotal + deliveryFee;
 
       // Descontar stock
@@ -116,34 +126,38 @@ export async function POST(request: Request) {
         data: { mapleCount: { decrement: mapleQuantity } },
       });
 
-      // --- 🛡️ LÓGICA DE AUTOR DE PEDIDO MÁS CLARA ---
-      let orderAuthorData: {
-        userId?: string;
-        guestName?: string;
-        guestPhone?: string;
-        guestAddress?: string;
+      // --- CONSTRUCCIÓN DEL OBJETO DE DATOS ---
+      // 1. Datos base
+      const baseData = {
+        mapleQuantity,
+        totalPrice,
+        paymentMethod,
       };
 
-      if (session?.user && session.user.role !== "ADMIN") {
-        // Un cliente registrado hace un pedido para sí mismo
-        orderAuthorData = { userId: session.user.id };
+      // 2. Datos del autor (Usuario vs Invitado)
+      let authorData: Partial<Prisma.OrderUncheckedCreateInput> = {};
+      if (session?.user && !isAdmin) {
+        authorData = { userId: session.user.id };
       } else {
-        // Un admin crea un pedido para un invitado, o un invitado lo hace por su cuenta
-        orderAuthorData = {
-          guestName: guestName,
-          guestPhone: guestPhone,
-          guestAddress: guestAddress,
+        // Usamos undefined en lugar de chequeos if para ser más concisos,
+        // Prisma ignora los undefined en create inputs.
+        authorData = {
+          guestName: guestName || undefined,
+          guestPhone: guestPhone || undefined,
+          guestAddress: guestAddress || undefined,
         };
       }
 
+      // 3. Unimos todo y forzamos el tipo Unchecked para evitar errores de TS con opcionales
+      const orderData = {
+        ...baseData,
+        ...authorData,
+        // Si scheduleId existe lo ponemos, si no, undefined
+        scheduleId: scheduleId || undefined,
+      } as Prisma.OrderUncheckedCreateInput;
+
       const order = await tx.order.create({
-        data: {
-          mapleQuantity,
-          totalPrice,
-          paymentMethod,
-          scheduleId,
-          ...orderAuthorData, // Unimos los datos del autor de forma limpia
-        },
+        data: orderData,
         include: {
           schedule: true,
           user: true,
@@ -155,10 +169,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(newOrder, { status: 201 });
   } catch (error: unknown) {
-    // --- MANEJO DE ERRORES SEGURO ---
     console.error("[ORDER_POST_ERROR]", error);
+
     if (error instanceof Error) {
-      // Devolvemos errores de negocio específicos al frontend
       if (
         error.message.includes("stock") ||
         error.message.includes("horario") ||
@@ -167,7 +180,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ message: error.message }, { status: 409 });
       }
     }
-    // Para cualquier otro error, un mensaje genérico
+
     return NextResponse.json(
       { message: "Error interno del servidor" },
       { status: 500 }

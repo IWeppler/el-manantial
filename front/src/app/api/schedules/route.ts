@@ -6,9 +6,21 @@ import { authOptions } from "@/lib/auth";
 import { ScheduleType } from "@prisma/client";
 
 const scheduleSchema = z.object({
-  dayOfWeek: z.enum(["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"]),
-  startTime: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)"),
-  endTime: z.string().regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)"),
+  dayOfWeek: z.enum([
+    "Lunes",
+    "Martes",
+    "Miércoles",
+    "Jueves",
+    "Viernes",
+    "Sábado",
+    "Domingo",
+  ]),
+  startTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)"),
+  endTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/, "Formato de hora inválido (HH:MM)"),
   type: z.nativeEnum(ScheduleType),
   isActive: z.boolean(),
 });
@@ -23,10 +35,13 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const validation = z.array(scheduleSchema).safeParse(body.schedules);
     if (!validation.success) {
-      return NextResponse.json({ errors: validation.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json(
+        { errors: validation.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
 
-    const { settingsId, schedules } = body;
+    const { schedules } = body;
 
     await db.$transaction(async (tx) => {
       // Borramos todos los horarios viejos

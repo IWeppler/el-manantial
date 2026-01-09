@@ -11,28 +11,32 @@ export default async function DashboardPage() {
     redirect("/");
   }
 
-  const [orders, stock, settings, production, expenses, schedules] = await Promise.all([
-    db.order.findMany({
-      orderBy: { orderDate: "desc" },
-      include: {
-        user: true,     
-        schedule: true, 
-      },
-    }),
-    db.stock.findFirst(),
-    db.settings.findFirst({
-      include: { priceTiers: true },
-    }),
-    db.eggProduction.findMany({ 
-      orderBy: { date: "desc" },
-      include: { user: { select: { name: true } } }
-    }),
-    db.expense.findMany({ 
-      orderBy: { date: "desc" },
-      include: { user: { select: { name: true } } }
-    }),
-    db.schedule.findMany({ where: { isActive: true }, orderBy: { dayOfWeek: 'asc' } }),
-  ]);
+  const [orders, stock, settings, production, expenses, schedules] =
+    await Promise.all([
+      db.order.findMany({
+        orderBy: { orderDate: "desc" },
+        include: {
+          user: true,
+          schedule: true,
+        },
+      }),
+      db.stock.findFirst(),
+      db.settings.findFirst({
+        include: { priceTiers: true },
+      }),
+      db.eggProduction.findMany({
+        orderBy: { date: "desc" },
+        include: { user: { select: { name: true } } },
+      }),
+      db.expense.findMany({
+        orderBy: { date: "desc" },
+        include: { user: { select: { name: true } } },
+      }),
+      db.schedule.findMany({
+        where: { isActive: true },
+        orderBy: { dayOfWeek: "asc" },
+      }),
+    ]);
 
   if (!settings) {
     throw new Error("La configuración del negocio no ha sido inicializada.");

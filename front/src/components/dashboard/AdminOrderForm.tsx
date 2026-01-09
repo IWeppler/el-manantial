@@ -11,7 +11,7 @@ import {
   ScheduleType,
 } from "@prisma/client";
 import { OrderWithDetails } from "@/hooks/useDashboard";
-import { useEffect, useState, useMemo, Fragment } from "react";
+import { useEffect, useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import {
   Search,
@@ -19,10 +19,8 @@ import {
   Check,
   User,
   MapPin,
-  Phone,
   Calculator,
   CreditCard,
-  Truck,
   X,
 } from "lucide-react";
 
@@ -30,7 +28,6 @@ import {
 type PriceTier = { minQuantity: number; price: number };
 type SettingsWithTiers = Settings & { priceTiers: PriceTier[] };
 
-// Interfaz para los resultados de la API de clientes
 interface ClientSearchResult {
   id: string;
   name: string;
@@ -46,6 +43,7 @@ interface AdminOrderFormProps {
   onOrderCreated: (newOrder: OrderWithDetails) => void;
 }
 
+// Eliminamos dayOfWeek y scheduleId de los valores
 interface AdminOrderFormValues {
   userId?: string;
   guestName: string;
@@ -53,13 +51,11 @@ interface AdminOrderFormValues {
   guestAddress: string;
   mapleQuantity: string | number;
   deliveryType: ScheduleType | "";
-  dayOfWeek: string;
-  scheduleId: string;
   paymentMethod: PaymentMethod | "";
   totalPrice: number;
 }
 
-// --- ESTILOS REUTILIZABLES (DARK MODE) ---
+// --- ESTILOS REUTILIZABLES ---
 const inputClasses =
   "w-full bg-[#0f0f11] border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder:text-zinc-600";
 const labelClasses = "block text-xs font-medium text-zinc-400 mb-1.5 ml-1";
@@ -67,15 +63,8 @@ const errorClasses = "text-red-400 text-xs mt-1 ml-1";
 const sectionTitleClasses =
   "text-sm font-bold text-white mb-4 flex items-center gap-2 border-b border-white/5 pb-2";
 
-// --- SUB-COMPONENTES ---
-
-const PriceCalculator = ({
-  settings,
-  schedules,
-}: {
-  settings: SettingsWithTiers;
-  schedules: Schedule[];
-}) => {
+// --- CALCULADORA DE PRECIO ---
+const PriceCalculator = ({ settings }: { settings: SettingsWithTiers }) => {
   const { values, setFieldValue } = useFormikContext<AdminOrderFormValues>();
   const [total, setTotal] = useState(0);
 
@@ -97,27 +86,10 @@ const PriceCalculator = ({
     if (applicableTier) pricePerMaple = applicableTier.price;
 
     const subtotal = quantity * pricePerMaple;
-    const selectedSchedule = schedules.find((s) => s.id === values.scheduleId);
 
-    let deliveryFee = 0;
-    if (
-      selectedSchedule?.type === "DELIVERY" &&
-      (!settings.freeDeliveryThreshold ||
-        subtotal < settings.freeDeliveryThreshold)
-    ) {
-      deliveryFee = settings.deliveryFee;
-    }
-
-    const finalTotal = subtotal + deliveryFee;
-    setTotal(finalTotal);
-    setFieldValue("totalPrice", finalTotal);
-  }, [
-    values.mapleQuantity,
-    values.scheduleId,
-    settings,
-    schedules,
-    setFieldValue,
-  ]);
+    setTotal(subtotal);
+    setFieldValue("totalPrice", subtotal);
+  }, [values.mapleQuantity, settings, setFieldValue]);
 
   return (
     <div className="flex flex-col items-end justify-center bg-[#0f0f11] p-4 rounded-xl border border-white/5 mt-6">
@@ -131,22 +103,17 @@ const PriceCalculator = ({
           minimumFractionDigits: 0,
         })}
       </span>
-      {values.deliveryType === "DELIVERY" && settings.deliveryFee > 0 && (
-        <span className="text-xs text-zinc-500 mt-1 flex items-center gap-1">
-          <Truck size={10} /> Incluye envío si corresponde
-        </span>
-      )}
     </div>
   );
 };
 
+// --- CAMPOS DEL FORMULARIO ---
 const OrderFormFields = ({
-  schedules,
   settings,
   onClose,
 }: {
-  schedules: Schedule[];
   settings: SettingsWithTiers;
+  schedules: Schedule[];
   onClose: () => void;
 }) => {
   const { values, setFieldValue, isSubmitting, errors, touched } =
@@ -189,33 +156,6 @@ const OrderFormFields = ({
     toast.success("Cliente cargado");
   };
 
-  // Lógica Horarios
-  const availableDays = useMemo(() => {
-    if (!values.deliveryType) return [];
-    const days = schedules
-      .filter((s) => s.type === values.deliveryType)
-      .map((s) => s.dayOfWeek);
-    return [...new Set(days)].map((day) => ({ value: day, label: day }));
-  }, [values.deliveryType, schedules]);
-
-  const availableTimes = useMemo(() => {
-    if (!values.dayOfWeek || !values.deliveryType) return [];
-    return schedules
-      .filter(
-        (s) =>
-          s.type === values.deliveryType && s.dayOfWeek === values.dayOfWeek
-      )
-      .map((s) => ({ value: s.id, label: `${s.startTime} a ${s.endTime}hs` }));
-  }, [values.dayOfWeek, values.deliveryType, schedules]);
-
-  useEffect(() => {
-    setFieldValue("dayOfWeek", "");
-    setFieldValue("scheduleId", "");
-  }, [values.deliveryType, setFieldValue]);
-  useEffect(() => {
-    setFieldValue("scheduleId", "");
-  }, [values.dayOfWeek, setFieldValue]);
-
   return (
     <Form className="space-y-6">
       {/* --- BUSCADOR --- */}
@@ -236,7 +176,6 @@ const OrderFormFields = ({
             <Loader2 className="absolute right-3 top-2.5 text-indigo-400 w-4 h-4 animate-spin" />
           )}
 
-          {/* Resultados Flotantes */}
           {searchResults.length > 0 && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-[#18181b] border border-white/10 rounded-xl shadow-2xl z-50 max-h-48 overflow-y-auto divide-y divide-white/5">
               {searchResults.map((client) => (
@@ -295,11 +234,12 @@ const OrderFormFields = ({
           </div>
         </div>
 
+        {/* Dirección solo visible si eligen DELIVERY */}
         <div
           className={`mt-4 transition-all duration-300 ${
-            values.deliveryType === "PICKUP" && !values.guestAddress
-              ? "hidden"
-              : "block"
+            values.deliveryType === "DELIVERY"
+              ? "block opacity-100 max-h-20"
+              : "hidden opacity-0 max-h-0"
           }`}
         >
           <label className={labelClasses}>Dirección de Entrega</label>
@@ -338,11 +278,7 @@ const OrderFormFields = ({
           <div>
             <label className={labelClasses}>Método de Pago</label>
             <div className="relative">
-              <Field
-                as="select"
-                name="paymentMethod"
-                className={inputClasses}
-              >
+              <Field as="select" name="paymentMethod" className={inputClasses}>
                 <option value="">Seleccionar...</option>
                 <option value="CASH">Efectivo</option>
                 <option value="TRANSFER">Transferencia</option>
@@ -355,63 +291,25 @@ const OrderFormFields = ({
           </div>
         </div>
 
+        {/* Solo dejamos Tipo de Entrega para saber si pedir dirección o no */}
         <div className="grid grid-cols-1 gap-4">
           <div>
             <label className={labelClasses}>Tipo de Entrega</label>
             <Field as="select" name="deliveryType" className={inputClasses}>
               <option value="">Seleccionar...</option>
-              <option value="PICKUP">Retiro en local</option>
+              <option value="PICKUP">Retiro / Mostrador</option>
               <option value="DELIVERY">Envío a domicilio</option>
             </Field>
             {errors.deliveryType && touched.deliveryType && (
               <div className={errorClasses}>{errors.deliveryType}</div>
             )}
           </div>
-
-          {values.deliveryType && (
-            <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
-              <div>
-                <label className={labelClasses}>Día</label>
-                <Field
-                  as="select"
-                  name="dayOfWeek"
-                  className={inputClasses}
-                >
-                  <option value="">Día...</option>
-                  {availableDays.map((d) => (
-                    <option key={d.value} value={d.value}>
-                      {d.label}
-                    </option>
-                  ))}
-                </Field>
-                {errors.dayOfWeek && touched.dayOfWeek && (
-                  <div className={errorClasses}>{errors.dayOfWeek}</div>
-                )}
-              </div>
-              <div>
-                <label className={labelClasses}>Horario</label>
-                <Field
-                  as="select"
-                  name="scheduleId"
-                  className={inputClasses}
-                >
-                  <option value="">Hora...</option>
-                  {availableTimes.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </Field>
-                {errors.scheduleId && touched.scheduleId && (
-                  <div className={errorClasses}>{errors.scheduleId}</div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* AQUÍ YA NO ESTÁN LOS INPUTS DE FECHA Y HORA */}
       </div>
 
-      <PriceCalculator settings={settings} schedules={schedules} />
+      <PriceCalculator settings={settings} />
 
       <div className="flex justify-end gap-3 pt-2 border-t border-white/5 mt-6">
         <button
@@ -442,21 +340,19 @@ export function AdminOrderForm({
   schedules,
   onOrderCreated,
 }: AdminOrderFormProps) {
+  // VALIDACIÓN: Quitamos dayOfWeek y scheduleId
   const validationSchema = Yup.object({
     guestName: Yup.string().required("Requerido"),
     guestPhone: Yup.string().required("Requerido"),
     mapleQuantity: Yup.number().positive("Mayor a 0").required("Requerido"),
-    deliveryType: Yup.string()
-      .oneOf(Object.values(ScheduleType))
-      .required("Requerido"),
-    dayOfWeek: Yup.string().required("Requerido"),
-    scheduleId: Yup.string().required("Requerido"),
+    deliveryType: Yup.string().required("Requerido"),
     paymentMethod: Yup.string()
       .oneOf(Object.values(PaymentMethod))
       .required("Requerido"),
     guestAddress: Yup.string().when("deliveryType", {
       is: "DELIVERY",
       then: (schema) => schema.required("Dirección obligatoria para envíos"),
+      otherwise: (schema) => schema.optional(),
     }),
   });
 
@@ -468,6 +364,7 @@ export function AdminOrderForm({
       const dataToSend = {
         ...values,
         mapleQuantity: Number(values.mapleQuantity),
+        // No enviamos scheduleId ni dayOfWeek
       };
       const response = await axios.post("/api/orders", dataToSend);
       toast.success("¡Pedido creado!");
@@ -492,8 +389,6 @@ export function AdminOrderForm({
     guestAddress: "",
     mapleQuantity: "",
     deliveryType: "",
-    dayOfWeek: "",
-    scheduleId: "",
     paymentMethod: "",
     totalPrice: 0,
   };
@@ -525,7 +420,6 @@ export function AdminOrderForm({
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-[#18181b] border border-white/10 p-6 shadow-xl transition-all text-left">
-                {/* Header Modal */}
                 <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
                   <Dialog.Title
                     as="h3"
@@ -541,7 +435,6 @@ export function AdminOrderForm({
                   </button>
                 </div>
 
-                {/* Contenido Formik */}
                 <Formik<AdminOrderFormValues>
                   initialValues={initialValues}
                   validationSchema={validationSchema}
